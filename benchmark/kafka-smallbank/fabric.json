@@ -2,16 +2,27 @@
   "fabric": {
     "cryptodir": "network/fabric/kafka/crypto-config",
     "network": {
-      "orderer": {
-        "url": "grpc://localhost:7050",
-        "mspid": "OrdererMSP",
-        "user": {
-          "key": "network/fabric/kafka/crypto-config/ordererOrganizations/example.com/users/Admin@example.com/msp/keystore/045f8663aa9f3d79752443b4d2c2d278076a8d504af0cbbf6f907f010d62c25f_sk",
-          "cert": "network/fabric/kafka/crypto-config/ordererOrganizations/example.com/users/Admin@example.com/msp/signcerts/Admin@example.com-cert.pem"
+      "orderers": [{
+          "url": "grpc://localhost:7050",
+          "mspid": "OrdererMSP",
+          "user": {
+            "key": "network/fabric/kafka/crypto-config/ordererOrganizations/example.com/users/Admin@example.com/msp/keystore/045f8663aa9f3d79752443b4d2c2d278076a8d504af0cbbf6f907f010d62c25f_sk",
+            "cert": "network/fabric/kafka/crypto-config/ordererOrganizations/example.com/users/Admin@example.com/msp/signcerts/Admin@example.com-cert.pem"
+          },
+          "server-hostname": "orderer0.example.com",
+          "tls_cacerts": "network/fabric/kafka/crypto-config/ordererOrganizations/example.com/users/Admin@example.com/tls/ca.crt"
         },
-        "server-hostname": "orderer0.example.com",
-        "tls_cacerts": "network/fabric/kafka/crypto-config/ordererOrganizations/example.com/users/Admin@example.com/tls/ca.crt"
-      },
+        {
+          "url": "grpc://localhost:8050",
+          "mspid": "OrdererMSP",
+          "user": {
+            "key": "network/fabric/kafka/crypto-config/ordererOrganizations/example.com/users/Admin@example.com/msp/keystore/045f8663aa9f3d79752443b4d2c2d278076a8d504af0cbbf6f907f010d62c25f_sk",
+            "cert": "network/fabric/kafka/crypto-config/ordererOrganizations/example.com/users/Admin@example.com/msp/signcerts/Admin@example.com-cert.pem"
+          },
+          "server-hostname": "orderer1.example.com",
+          "tls_cacerts": "network/fabric/kafka/crypto-config/ordererOrganizations/example.com/users/Admin@example.com/tls/ca.crt"
+        }
+      ],
       "org1": {
         "name": "peerOrg1",
         "mspid": "Org1MSP",

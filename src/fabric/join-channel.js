@@ -65,17 +65,17 @@ function joinChannel(org, channelName) {
 
     const targets = [], eventhubs = [];
 
-    const caRootsPath = ORGS.orderer.tls_cacerts;
+    const caRootsPath = ORGS.orderers[0].tls_cacerts;
     let data = fs.readFileSync(commUtils.resolvePath(caRootsPath));
     let caroots = Buffer.from(data).toString();
     let genesis_block = null;
 
     channel.addOrderer(
         client.newOrderer(
-            ORGS.orderer.url,
+            ORGS.orderers[0].url,
             {
                 'pem': caroots,
-                'ssl-target-name-override': ORGS.orderer['server-hostname']
+                'ssl-target-name-override': ORGS.orderers[0]['server-hostname']
             }
         )
     );

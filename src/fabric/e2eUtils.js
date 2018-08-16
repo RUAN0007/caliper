@@ -63,16 +63,16 @@ function installChaincode(org, chaincode) {
     cryptoSuite.setCryptoKeyStore(Client.newCryptoKeyStore({path: testUtil.storePathForOrg(orgName)}));
     client.setCryptoSuite(cryptoSuite);
 
-    const caRootsPath = ORGS.orderer.tls_cacerts;
+    const caRootsPath = ORGS.orderers[0].tls_cacerts;
     let data = fs.readFileSync(commUtils.resolvePath(caRootsPath));
     let caroots = Buffer.from(data).toString();
 
     channel.addOrderer(
         client.newOrderer(
-            ORGS.orderer.url,
+            ORGS.orderers[0].url,
             {
                 'pem': caroots,
-                'ssl-target-name-override': ORGS.orderer['server-hostname']
+                'ssl-target-name-override': ORGS.orderers[0]['server-hostname']
             }
         )
     );
@@ -229,16 +229,16 @@ function instantiateChaincode(chaincode, endorsement_policy, upgrade){
     cryptoSuite.setCryptoKeyStore(Client.newCryptoKeyStore({path: testUtil.storePathForOrg(orgName)}));
     client.setCryptoSuite(cryptoSuite);
 
-    const caRootsPath = ORGS.orderer.tls_cacerts;
+    const caRootsPath = ORGS.orderers[0].tls_cacerts;
     let data = fs.readFileSync(commUtils.resolvePath(caRootsPath));
     let caroots = Buffer.from(data).toString();
 
     channel.addOrderer(
         client.newOrderer(
-            ORGS.orderer.url,
+            ORGS.orderers[0].url,
             {
                 'pem': caroots,
-                'ssl-target-name-override': ORGS.orderer['server-hostname']
+                'ssl-target-name-override': ORGS.orderers[0]['server-hostname']
             }
         )
     );
@@ -435,17 +435,18 @@ function getcontext(channelConfig) {
     const eventhubs = [];
     cryptoSuite.setCryptoKeyStore(Client.newCryptoKeyStore({path: testUtil.storePathForOrg(orgName)}));
     client.setCryptoSuite(cryptoSuite);
-
-    const caRootsPath = ORGS.orderer.tls_cacerts;
+	
+    let oidx = Math.floor(Math.random() * ORGS.orderers.length);
+    const caRootsPath = ORGS.orderers[oidx].tls_cacerts;
     let data = fs.readFileSync(commUtils.resolvePath(caRootsPath));
     let caroots = Buffer.from(data).toString();
 
     channel.addOrderer(
         client.newOrderer(
-            ORGS.orderer.url,
+            ORGS.orderers[oidx].url,
             {
                 'pem': caroots,
-                'ssl-target-name-override': ORGS.orderer['server-hostname']
+                'ssl-target-name-override': ORGS.orderers[oidx]['server-hostname']
             }
         )
     );

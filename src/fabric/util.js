@@ -267,11 +267,11 @@ function getAdmin(client, userOrg) {
  */
 function getOrdererAdmin(client) {
     try {
-        if(!ORGS.orderer) {
+        if(!ORGS.orderers) {
             throw new Error('Could not found orderer in configuration');
         }
 
-        const orderer = ORGS.orderer;
+        const orderer = ORGS.orderers[0];
         let keyPEM, certPEM;
         if(orderer.user) {
             keyPEM = fs.readFileSync(commUtils.resolvePath(orderer.user.key));

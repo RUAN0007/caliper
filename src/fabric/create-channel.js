@@ -52,7 +52,7 @@ function run(config_path) {
     return new Promise(function(resolve, reject) {
         const t = global.tapeObj;
         let ORGS = fabric.network;
-        let caRootsPath = ORGS.orderer.tls_cacerts;
+        let caRootsPath = ORGS.orderers[0].tls_cacerts;
         let data = fs.readFileSync(commUtils.resolvePath(caRootsPath));
         let caroots = Buffer.from(data).toString();
         utils.setConfigSetting('key-value-store', 'fabric-client/lib/impl/FileKeyValueStore.js');
@@ -69,10 +69,10 @@ function run(config_path) {
                 let client = new Client();
                 let org = channel.organizations[0];
                 let orderer = client.newOrderer(
-                    ORGS.orderer.url,
+                    ORGS.orderers[0].url,
                     {
                         'pem': caroots,
-                        'ssl-target-name-override': ORGS.orderer['server-hostname']
+                        'ssl-target-name-override': ORGS.orderers[0]['server-hostname']
                     }
                 );
 
