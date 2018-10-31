@@ -18,8 +18,8 @@ const _test = require('tape-promise');
 const test = _test(tape);
 const table = require('table');
 const Blockchain = require('./blockchain.js');
-const Monitor = require('./monitor.js');
-const Report  = require('./report.js');
+// const Monitor = require('./monitor.js');
+//const Report  = require('./report.js');
 const Client  = require('./client/client.js');
 const Util = require('./util.js');
 const log = Util.log;
@@ -33,44 +33,44 @@ let absCaliperDir = path.join(__dirname, '..', '..');
 /**
  * Generate mustache template for test report
  */
-function createReport() {
-    let config = require(absConfigFile);
-    report  = new Report();
-    report.addMetadata('DLT', blockchain.gettype());
-    try{
-        report.addMetadata('Benchmark', config.test.name);
-    }
-    catch(err) {
-        report.addMetadata('Benchmark', ' ');
-    }
-    try{
-        report.addMetadata('Description', config.test.description);
-    }
-    catch(err) {
-        report.addMetadata('Description', ' ');
-    }
-    try{
-        let r = 0;
-        for(let i = 0 ; i < config.test.rounds.length ; i++) {
-            if(config.test.rounds[i].hasOwnProperty('txNumber')) {
-                r += config.test.rounds[i].txNumber.length;
-            }
-        }
-        report.addMetadata('Test Rounds', r);
-
-        report.setBenchmarkInfo(JSON.stringify(config.test, null, 2));
-    }
-    catch(err) {
-        report.addMetadata('Test Rounds', ' ');
-    }
-
-    let sut = require(absNetworkFile);
-    if(sut.hasOwnProperty('info')) {
-        for(let key in sut.info) {
-            report.addSUTInfo(key, sut.info[key]);
-        }
-    }
-}
+// function createReport() {
+//     let config = require(absConfigFile);
+//     report  = new Report();
+//     report.addMetadata('DLT', blockchain.gettype());
+//     try{
+//         report.addMetadata('Benchmark', config.test.name);
+//     }
+//     catch(err) {
+//         report.addMetadata('Benchmark', ' ');
+//     }
+//     try{
+//         report.addMetadata('Description', config.test.description);
+//     }
+//     catch(err) {
+//         report.addMetadata('Description', ' ');
+//     }
+//     try{
+//         let r = 0;
+//         for(let i = 0 ; i < config.test.rounds.length ; i++) {
+//             if(config.test.rounds[i].hasOwnProperty('txNumber')) {
+//                 r += config.test.rounds[i].txNumber.length;
+//             }
+//         }
+//         report.addMetadata('Test Rounds', r);
+// 
+//         report.setBenchmarkInfo(JSON.stringify(config.test, null, 2));
+//     }
+//     catch(err) {
+//         report.addMetadata('Test Rounds', ' ');
+//     }
+// 
+//     let sut = require(absNetworkFile);
+//     if(sut.hasOwnProperty('info')) {
+//         for(let key in sut.info) {
+//             report.addSUTInfo(key, sut.info[key]);
+//         }
+//     }
+// }
 
 /**
  * print table
@@ -137,7 +137,7 @@ function printResultsByRound() {
     log('###all test results:###');
     printTable(resultsbyround);
 
-    report.setSummaryTable(resultsbyround);
+    // report.setSummaryTable(resultsbyround);
 }
 
 
@@ -177,14 +177,14 @@ function processResult(results, label){
         }
         log('###test result:###');
         printTable(resultTable);
-        let idx = report.addBenchmarkRound(label);
-        report.setRoundPerformance(idx, resultTable);
-        let resourceTable = monitor.getDefaultStats();
-        if(resourceTable.length > 0) {
-            log('### resource stats ###');
-            printTable(resourceTable);
-            report.setRoundResource(idx, resourceTable);
-        }
+//        let idx = report.addBenchmarkRound(label);
+//        report.setRoundPerformance(idx, resultTable);
+//        let resourceTable = monitor.getDefaultStats();
+//        if(resourceTable.length > 0) {
+//            log('### resource stats ###');
+//            printTable(resourceTable);
+//            report.setRoundResource(idx, resourceTable);
+//        }
         return Promise.resolve();
     }
     catch(err) {
@@ -249,7 +249,8 @@ function defaultTest(args, clientArgs, final) {
                     else {
                         log('wait 5 seconds for next round...');
                         return Util.sleep(5000).then( () => {
-                            return monitor.restart();
+                            //return monitor.restart();
+							return;
                         });
                     }
                 }).catch( (err) => {
@@ -278,9 +279,9 @@ module.exports.run = function(configFile, networkFile) {
         absConfigFile  = Util.resolvePath(configFile);
         absNetworkFile = Util.resolvePath(networkFile);
         blockchain = new Blockchain(absNetworkFile);
-        monitor = new Monitor(absConfigFile);
+        //monitor = new Monitor(absConfigFile);
         client  = new Client(absConfigFile);
-        createReport();
+        //createReport();
         demo.init();
         let startPromise = new Promise((resolve, reject) => {
             let config = require(absConfigFile);
@@ -309,11 +310,11 @@ module.exports.run = function(configFile, networkFile) {
                 return blockchain.prepareClients(number);
             });
         }).then( (clientArgs) => {
-            monitor.start().then(()=>{
-                log('started monitor successfully');
-            }).catch( (err) => {
-                log('could not start monitor, ' + (err.stack ? err.stack : err));
-            });
+         //   monitor.start().then(()=>{
+         //       log('started monitor successfully');
+         //   }).catch( (err) => {
+         //       log('could not start monitor, ' + (err.stack ? err.stack : err));
+         //   });
 
             let allTests  = require(absConfigFile).test.rounds;
             let testIdx   = 0;
@@ -327,15 +328,16 @@ module.exports.run = function(configFile, networkFile) {
         }).then( () => {
             log('----------finished test----------\n');
             printResultsByRound();
-            monitor.printMaxStats();
-            monitor.stop();
-            let date = new Date().toISOString().replace(/-/g,'').replace(/:/g,'').substr(0,15);
-            let output = path.join(process.cwd(), 'report'+date+'.html' );
-            return report.generate(output).then(()=>{
-                demo.stopWatch(output);
-                log('Generated report at ' + output);
-                return Promise.resolve();
-            });
+         //   monitor.printMaxStats();
+         //   monitor.stop();
+         //   let date = new Date().toISOString().replace(/-/g,'').replace(/:/g,'').substr(0,15);
+         //   let output = path.join(process.cwd(), 'report'+date+'.html' );
+         //   return report.generate(output).then(()=>{
+         //       log('Generated report at ' + output);
+         //       return Promise.resolve();
+         //   });
+             demo.stopWatch("");
+             return Promise.resolve();
         }).then( () => {
             client.stop();
             let config = require(absConfigFile);
