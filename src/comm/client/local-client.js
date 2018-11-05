@@ -17,7 +17,12 @@ let blockchain;
 let results      = [];
 let txNum        = 0;
 let txLastNum    = 0;
-let resultStats  = [];
+
+let invokeStats  = [];  // invoke stats
+let detailedDelayStats  = [];  // delay for invoke stats
+let queryStats  = [];  // query stats
+let resultStats  = [];  // overall stats
+
 let txUpdateTime = 1000;
 let trimType = 0;
 let trim = 0;
@@ -30,12 +35,42 @@ function txUpdate() {
     let newNum = txNum - txLastNum;
     txLastNum += newNum;
 
-
+    // results is an array of txnstatus
     let newResults = results.slice(0);
     results = [];
     if(newResults.length === 0 && newNum === 0) {
         return;
     }
+
+    let newQueryTxnStatuses = [];
+    let newInvokeTxnStatuses = [];
+    newResults.forEach(function(newTxnStatus) {
+        if (newTxnStatus.Get("operation") === "query") {
+            newQueryTxnStatuses.push(newTxnStatus);
+        } else if (newTxnStatus.Get("operation") === "invoke") {
+            newInvokeTxnStatuses.push(newTxnStatus);
+        } else {
+            console.err("Unrecognized txn operation type");
+        }
+    });
+
+    let newQueryStats;
+    if (newQueryTxnStatuses.length === 0) {
+        newQueryStats = bc.createNullDefaultTxStats();
+    } else {
+        newQueryStats = blockchain.getDefaultTxStats(newQueryTxnStatuses, false);
+    }
+
+    let newInvokeStats;
+    let newDetailedDelayStats;
+    if (newInvokeTxnStatuses.length === 0) {
+        newInvokeStats = bc.createNullDefaultTxStats();
+        newDetailedDelayStats = bc.createNullDetailedDelayStats();
+    } else {
+        newInvokeStats = blockchain.getDefaultTxStats(newInvokeTxnStatuses, false);
+        newDetailedDelayStats = blockchain.getDetailedDelayStats(newInvokeTxnStatuses, false)
+    }
+
 
     let newStats;
     if(newResults.length === 0) {
@@ -45,6 +80,55 @@ function txUpdate() {
         newStats = blockchain.getDefaultTxStats(newResults, false);
     }
     process.send({type: 'txUpdated', data: {submitted: newNum, committed: newStats}});
+
+
+    if (queryStats.length === 0) {
+        switch (trimType) {
+        case 0: // no trim
+            queryStats[0] = newQueryStats;
+            break;
+        case 1: // based on duration
+            if (trim < (Date.now() - startTime)/1000) {
+                queryStats[0] = newQueryStats;
+            }
+            break;
+        case 2: // based on number
+            if (trim < 0) {
+                queryStats[0] = newQueryStats;
+            }            
+            break;
+        }
+    } else {
+        queryStats[1] = newQueryStats;
+        bc.mergeDefaultTxStats(queryStats);
+    }
+
+
+    if (invokeStats.length === 0) {
+        switch (trimType) {
+        case 0: // no trim
+            invokeStats[0] = newInvokeStats;
+            detailedDelayStats[0] = newDetailedDelayStats;
+            break;
+        case 1: // based on duration
+            if (trim < (Date.now() - startTime)/1000) {
+                invokeStats[0] = newInvokeStats;
+                detailedDelayStats[0] = newDetailedDelayStats;
+            }
+            break;
+        case 2: // based on number
+            if (trim < 0) {
+                invokeStats[0] = newInvokeStats;
+                detailedDelayStats[0] = newDetailedDelayStats;
+            }
+            break;
+        }
+    } else {
+        invokeStats[1] = newInvokeStats;
+        detailedDelayStats[1] = newDetailedDelayStats;
+        bc.mergeDefaultTxStats(invokeStats);
+        bc.mergeDetailedDelayStats(detailedDelayStats);
+    }
 
     if (resultStats.length === 0) {
         switch (trimType) {
@@ -57,11 +141,8 @@ function txUpdate() {
             }
             break;
         case 2: // based on number
-            if (trim < newResults.length) {
-                newResults = newResults.slice(trim);
-                newStats = blockchain.getDefaultTxStats(newResults, false);
+            if (trim < 0) {
                 resultStats[0] = newStats;
-                trim = 0;
             } else {
                 trim -= newResults.length;
             }
@@ -95,6 +176,9 @@ function addResult(result) {
 function beforeTest(msg) {
     results  = [];
     resultStats = [];
+    invokeStats = [];
+    queryStats = [];
+    detailedDelayStats = [];
     txNum = 0;
     txLastNum = 0;
 
@@ -225,12 +309,26 @@ function doTest(msg) {
         clearUpdateInter();
         return cb.end();
     }).then(() => {
+        let allStats = [];
+        if (queryStats.length > 0) {
+            allStats.push(queryStats[0]);
+        } else {
+            allStats.push(bc.createNullDefaultTxStats());
+        }
+
+        if (invokeStats.length > 0) {
+            allStats.push(invokeStats[0]);
+        } else {
+            allStats.push(bc.createNullDefaultTxStats());
+        }
+
         if (resultStats.length > 0) {
-            return Promise.resolve(resultStats[0]);
+            allStats.push(resultStats[0]);
+        } else {
+            allStats.push(bc.createNullDefaultTxStats());
         }
-        else {
-            return Promise.resolve(bc.createNullDefaultTxStats());
-        }
+
+        return Promise.resolve(allStats);
     }).catch((err) => {
         clearUpdateInter();
         log('Client ' + process.pid + ': error ' + (err.stack ? err.stack : err));

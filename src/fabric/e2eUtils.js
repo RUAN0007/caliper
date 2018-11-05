@@ -561,6 +561,7 @@ async function invokebycontext(context, id, version, args, timeout){
 
     // timestamps are recorded for every phase regardless of success/failure
     let invokeStatus = new TxStatus(txId);
+    invokeStatus.Set('operation', 'invoke');
     let errFlag = TxErrorEnum.NoError;
     invokeStatus.SetFlag(errFlag);
 
@@ -582,6 +583,7 @@ async function invokebycontext(context, id, version, args, timeout){
             context.engine.submitCallback(1);
         }
         try {
+            invokeStatus.Set('time_create', Date.now());
             proposalResponseObject = await channel.sendTransactionProposal(proposalRequest, timeout * 1000);
             invokeStatus.Set('time_endorse', Date.now());
         } catch (err) {
@@ -715,6 +717,7 @@ async function invokebycontext(context, id, version, args, timeout){
             invokeStatus.SetStatusFail();
             commUtils.log('Failed to complete transaction [' + txId.substring(0, 5) + '...]: every eventhub connection closed');
         } else {
+            invokeStatus.Set('time_commit', Date.now());
             invokeStatus.SetStatusSuccess();
         }
     } catch (err)
@@ -744,6 +747,7 @@ function querybycontext(context, id, version, name) {
     //const eventhubs = context.eventhubs;
     const tx_id = client.newTransactionID();
     const txStatus = new TxStatus(tx_id.getTransactionID());
+    txStatus.Set('operation', 'query');
 
     // send query
     const request = {

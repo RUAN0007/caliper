@@ -87,7 +87,7 @@ function printTable(value) {
  */
 function getResultTitle() {
     // temporarily remove percentile return ['Name', 'Succ', 'Fail', 'Send Rate', 'Max Latency', 'Min Latency', 'Avg Latency', '75%ile Latency', 'Throughput'];
-    return ['Name', 'Succ', 'Fail', 'Send Rate', 'Max Latency', 'Min Latency', 'Avg Latency', 'Throughput'];
+    return ['Name', 'Operation', 'Succ', 'Fail', 'Send Rate', 'Max Latency', 'Min Latency', 'Avg Latency', 'Throughput'];
 }
 
 /**
@@ -99,6 +99,7 @@ function getResultValue(r) {
     let row = [];
     try {
         row.push(r.label);
+        row.push(r.operation);
         row.push(r.succ);
         row.push(r.fail);
         (r.create.max === r.create.min) ? row.push((r.succ + r.fail) + ' tps') : row.push(((r.succ + r.fail) / (r.create.max - r.create.min)).toFixed(0) + ' tps');
@@ -150,33 +151,60 @@ function printResultsByRound() {
  *     final  : {min:, max: },            // min/max time when txns were committed
  *     delay  : {min:, max: , sum:, detail:[]},     // min/max/sum of txns' end2end delay, as well as all txns' delay
  * }
- * @param {Array} results array of txStatistics
+ * @param {Array} results array of 3-value array [queryStat, invokeStat, overallStat]
  * @param {String} label label of the test round
  * @return {Promise} promise object
  */
 function processResult(results, label){
     try{
         let resultTable = [];
-        resultTable[0] = getResultTitle();
-        let r;
-        if(Blockchain.mergeDefaultTxStats(results) === 0) {
-            r = Blockchain.createNullDefaultTxStats();
-            r.label = label;
-        }
-        else {
-            r = results[0];
-            r.label = label;
-            resultTable[1] = getResultValue(r);
+        resultTable.push(getResultTitle());
+
+        let query_results = [];
+        let invoke_results = [];
+        let overall_results = [];
+        
+        results.forEach(function(element) {
+            query_results.push(element[0]);
+            invoke_results.push(element[1]);
+            overall_results.push(element[2]);
+        });
+
+        // For query stats
+        let query_stats;
+        if(Blockchain.mergeDefaultTxStats(query_results) === 1) {
+            query_stats = query_results[0];
+            query_stats.label = label;
+            query_stats.operation = "query";
+            resultTable.push(getResultValue(query_stats));
         }
 
-        if(resultsbyround.length === 0) {
-            resultsbyround.push(resultTable[0].slice(0));
+        // For invoke stats
+        let invoke_stats;
+        if(Blockchain.mergeDefaultTxStats(invoke_results) === 1) {
+            invoke_stats = invoke_results[0];
+            invoke_stats.label = label;
+            invoke_stats.operation = "invoke";
+            resultTable.push(getResultValue(invoke_stats));
         }
-        if(resultTable.length > 1) {
-            resultsbyround.push(resultTable[1].slice(0));
+
+        // For overall stats
+        let overall_stats;
+        if(Blockchain.mergeDefaultTxStats(overall_results) === 0) {
+            overall_stats = Blockchain.createNullDefaultTxStats();
+            overall_stats.label = label;
+            overall_stats.operation = "overall";
         }
+        else {
+            overall_stats = overall_results[0];
+            overall_stats.label = label;
+            overall_stats.operation = "overall";
+            resultTable.push(getResultValue(overall_stats));
+        }
+
         log('###test result:###');
         printTable(resultTable);
+
 //        let idx = report.addBenchmarkRound(label);
 //        report.setRoundPerformance(idx, resultTable);
 //        let resourceTable = monitor.getDefaultStats();
@@ -185,6 +213,15 @@ function processResult(results, label){
 //            printTable(resourceTable);
 //            report.setRoundResource(idx, resourceTable);
 //        }
+
+
+        if(resultsbyround.length === 0) {
+            resultsbyround.push(resultTable[0].slice(0));
+        }
+        if(resultTable.length > 1) {
+            resultsbyround.push(getResultValue(overall_stats));
+        }
+
         return Promise.resolve();
     }
     catch(err) {

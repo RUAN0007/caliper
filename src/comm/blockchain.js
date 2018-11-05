@@ -212,6 +212,45 @@ class Blockchain {
         return stats;
     }
 
+
+    /**
+    * Calculate the delay breakdown for invoke operation
+    * @param {Array} results array of txStatus
+    * @param {Boolean} detail indicates whether to keep detailed information
+    * @return {JSON} txStatistics JSON object
+    */
+    getDetailedDelayStats(results, detail) {
+        let s2e_delay_sum = 0; // delay from submission to endorsement
+        let e2o_delay_sum = 0;  // delay from endorsement to ordering
+        let o2f_delay_sum = 0;  // delay from ordering to commit
+        let succ_count = 0;
+
+        for(let i = 0 ; i < results.length ; i++) {
+            let stat   = results[i];
+            if (stat.IsCommitted()) {
+                let create = stat.Get("time_create");
+                let endorse = stat.Get("time_endorse");
+                let order = stat.Get("time_order");
+                let commit = stat.Get("time_commit");
+
+                succ_count += 1;
+                s2e_delay_sum += (endorse - create) / 1000; 
+                e2o_delay_sum += (order - endorse) / 1000; 
+                o2f_delay_sum += (commit - order) / 1000; 
+            }  // end if
+        }  // end for
+
+        let stats = {
+            'succ': succ_count,
+            's2e_sum' : s2e_delay_sum,
+            'e2o_sum' : e2o_delay_sum,
+            'o2f_sum' : o2f_delay_sum,
+        };
+        return stats;     
+    }
+
+
+
     /**
      * merge an array of default 'txStatistics', the result is in first object of the array
      * Note even failed the first object of the array may still be changed
@@ -284,6 +323,31 @@ class Blockchain {
      */
     static createNullDefaultTxStats() {
         return {succ: 0, fail: 0};
+    }
+
+    /**
+     * create a 'null' txStatistics object
+     * @return {JSON} 'null' txStatistics object
+     */
+    static createNullDetailedDelayStats() {
+        let stats = {
+            'succ' : 0,
+            's2e_sum' : 0,
+            'e2o_sum' : 0,
+            'o2f_sum' : 0
+        };
+        return stats;;
+    }
+
+    static mergeDetailedDelayStats(results) {
+        let r = results[0];
+        for(let i = 1 ; i < results.length ; i++) {
+            let result = results[i];
+            r.succ += result.succ;
+            r.s2e_sum += result.s2e_sum;
+            r.e2o_sum += result.e2o_sum;
+            r.o2f_sum += result.o2f_sum;
+        }
     }
 }
 
