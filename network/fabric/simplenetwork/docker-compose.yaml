@@ -7,7 +7,7 @@ version: '2'
 
 services:
   ca:
-    image: hyperledger/fabric-ca:latest
+    image: hyperledger/fabric-ca:1.2.0
     environment:
       - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
       - FABRIC_CA_SERVER_CA_NAME=ca-org1
@@ -45,7 +45,7 @@ services:
 
   orderer.example.com:
     container_name: orderer.example.com
-    image: hyperledger/fabric-orderer:latest
+    image: hyperledger/fabric-orderer:1.2.0
     environment:
 #      - ORDERER_GENERAL_LOGLEVEL=debug
       - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
@@ -69,7 +69,7 @@ services:
         - ./crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/:/etc/hyperledger/msp/peerOrg2
 
   peer:
-    image: hyperledger/fabric-peer:latest
+    image: hyperledger/fabric-peer:1.2.0
     environment:
       - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
 #      - CORE_LOGGING_PEER=debug

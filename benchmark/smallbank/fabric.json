@@ -2,7 +2,7 @@
   "fabric": {
     "cryptodir": "network/fabric/simplenetwork/crypto-config",
     "network": {
-      "orderer": {
+      "orderers": [{
         "url": "grpcs://localhost:7050",
         "mspid": "OrdererMSP",
         "user": {
@@ -11,7 +11,8 @@
         },
         "server-hostname": "orderer.example.com",
         "tls_cacerts": "network/fabric/simplenetwork/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/tls/ca.crt"
-      },
+      }
+      ],
       "org1": {
         "name": "peerOrg1",
         "mspid": "Org1MSP",
