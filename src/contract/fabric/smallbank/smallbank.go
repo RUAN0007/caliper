@@ -102,7 +102,7 @@ func (t *SmallbankChaincode) DepositChecking(stub shim.ChaincodeStubInterface, a
 	}
 	account, err := loadAccount(stub, args[1])
 	if err != nil {
-		return errormsg(ERR_NOT_FOUND);
+		return errormsg(ERR_NOT_FOUND + " " + args[1]);
 	}
 	amount, _ := strconv.Atoi(args[0])
 	account.CheckingBalance += amount
@@ -120,7 +120,7 @@ func (t *SmallbankChaincode) WriteCheck(stub shim.ChaincodeStubInterface, args [
 	}
 	account, err := loadAccount(stub, args[1])
 	if err != nil {
-		return errormsg(ERR_NOT_FOUND);
+		return errormsg(ERR_NOT_FOUND + " " + args[1]);
 	}
 	amount, _ := strconv.Atoi(args[0])
 	account.CheckingBalance -= amount
@@ -138,7 +138,7 @@ func (t *SmallbankChaincode) TransactSavings(stub shim.ChaincodeStubInterface, a
 	}
 	account, err := loadAccount(stub, args[1])
 	if err != nil {
-		return errormsg(ERR_NOT_FOUND);
+		return errormsg(ERR_NOT_FOUND + " " + args[1]);
 	}
 	amount, _ := strconv.Atoi(args[0])
 	// since the contract is only used for perfomance testing, we ignore this check 
@@ -160,8 +160,12 @@ func (t *SmallbankChaincode) SendPayment(stub shim.ChaincodeStubInterface, args 
 	}
 	destAccount, err1 := loadAccount(stub, args[1])
 	sourceAccount, err2 := loadAccount(stub, args[2])
-	if err1 != nil || err2 != nil {
-		return errormsg(ERR_NOT_FOUND)
+	if err1 != nil {
+		return errormsg(ERR_NOT_FOUND + " " + args[1])
+	}
+
+	if err2 != nil {
+		return errormsg(ERR_NOT_FOUND + " " + args[2])
 	}
 
 	amount, _ := strconv.Atoi(args[0])
@@ -186,8 +190,12 @@ func (t *SmallbankChaincode) Amalgamate(stub shim.ChaincodeStubInterface, args [
 	}
 	destAccount, err1 := loadAccount(stub, args[0])
 	sourceAccount, err2 := loadAccount(stub, args[1])
-	if err1 != nil || err2 != nil {
-		return errormsg(ERR_NOT_FOUND)
+	if err1 != nil {
+		return errormsg(ERR_NOT_FOUND + " " + args[1])
+	}
+
+	if err2 != nil {
+		return errormsg(ERR_NOT_FOUND + " " + args[2])
 	}
 
 	destAccount.CheckingBalance += sourceAccount.SavingsBalance

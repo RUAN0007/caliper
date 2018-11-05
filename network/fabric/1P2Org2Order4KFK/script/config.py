@@ -61,3 +61,10 @@ PEER_END=5
 PEER_DATA="/data/ruanpc/hyperledger/production/peer"
 PEER_LOG="/data/ruanpc/peer"
 PEER_LOCAL_MSPDIR_TEMPLATE=CRYPTO_CFG_DIR + "/peerOrganizations/org{}.example.com/peers/peer0.org{}.example.com/msp"
+
+# Config one of zk node address in config.json
+ZK_CLI_SCRIPT="/users/ruanpc/caliper/src/comm/client/zoo-client.js"
+CLI_START=12
+CLI_END=13
+ZK_CLI_LOG="/data/ruanpc/zk_cli_log"
+

@@ -225,8 +225,20 @@ def init_peers():
         bash_rm(peer_node, config.PEER_LOG)
 
 
+def start_zk_clients():
+    zk_node="slave-" + str(config.ZK_START) + ":2181"
+    print "Start zk clients with zk node " + zk_node
+    cli_cmd = " node " + config.ZK_CLI_SCRIPT + " " + zk_node
+    cli_cmd += " > " + config.ZK_CLI_LOG + " 2>&1 "
+    cli_cmd += "&"
+    for i in range(config.CLI_START, config.CLI_END+1):
+        cli_node = "slave-" + str(i)
+        remote_cmd(cli_node, cli_cmd)
+
+
 def main():
     if len(sys.argv) < 1:
+        print "python network.py up zk: freshly Launch the network with zookeeper clients"
         print "python network.py up: freshly Launch the network"
         print "python network.py down: Bring down the network"
     elif sys.argv[1] == "up":
@@ -243,6 +255,8 @@ def main():
 
         init_peers()
         start_peers()
+        if sys.argv[2] == "zk": 
+			start_zk_clients()
     elif sys.argv[1] == "down":
         stop_peers()
         stop_orderers()
