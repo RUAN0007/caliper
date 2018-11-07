@@ -12,22 +12,24 @@
     "description" : "This is smallbank benchmark for caliper",
     "clients": {
       "type": "local",
-      "number": 5
+      "number": 2
     },
     "rounds": [
       {
-        "label" : "smallOperations",
-        "txNumber" : [4000],
-        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 200}}],
-        "arguments": {"accounts":400, "txnPerBatch":10},
-        "callback" : "benchmark/smallbank/smallbankOperations.js"
+        "label" : "load",
+        "txNumber" : [200],
+        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 50}}],
+        "arguments": {"txnPerBatch":50},
+        "callback" : "benchmark/smallbank/load.js"
       },
       {
-        "label" : "query",
-        "txNumber" : [2000],
-        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 200}}],
-        "callback" : "benchmark/smallbank/query.js"
-      }]
+        "label" : "mixed",
+        "txNumber" : [200],
+        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 50}}],
+        "arguments": {"queryRatio": 0.5, "txnPerBatch":10},
+        "callback" : "benchmark/smallbank/mixed.js"
+      }
+    ]
   },
   "monitor": {
     "type": "docker",

@@ -91,8 +91,8 @@
       "policy": { "2-of": [{"signed-by": 0}, {"signed-by": 1}]}
     },
     "context": {
-      "smallOperations": "mychannel",
-      "query": "mychannel"
+      "load": "mychannel",
+      "mixed": "mychannel"
     }
   },
   "info" : {
