@@ -27,3 +27,5 @@ zookeeper.out
 
 # Ignore IDE files
 .vscode/*
+
+*sublime*

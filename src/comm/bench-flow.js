@@ -90,6 +90,27 @@ function getResultTitle() {
     return ['Name', 'Operation', 'Succ', 'Fail', 'Send Rate', 'Max Latency', 'Min Latency', 'Avg Latency', 'Throughput'];
 }
 
+function getDetailedDelayTitle() {
+    return ['Name',  'Succ', 'Avg S2E', 'Avg E2O', 'Avg O2F', 'Avg Latency'];
+}
+
+function getDetailedDelayValue(r) {
+    let row = [];
+    try {
+        row.push(r.label);
+        row.push(r.succ);
+        row.push((r.s2e_sum / r.succ).toFixed(2) + ' s');
+        row.push((r.e2o_sum / r.succ).toFixed(2) + ' s');
+        row.push((r.o2f_sum / r.succ).toFixed(2) + ' s');
+        row.push((r.delay_sum / r.succ).toFixed(2) + ' s');
+    }
+    catch (err) {
+        row = [r.label, 0, 'N/A', 'N/A', 'N/A', 'N/A'];
+    }
+
+    return row; 
+}
+
 /**
  * get rows of the default result table
  * @param {Array} r array of txStatistics JSON objects
@@ -163,11 +184,13 @@ function processResult(results, label){
         let query_results = [];
         let invoke_results = [];
         let overall_results = [];
+        let detailed_delay_results = [];
         
         results.forEach(function(element) {
             query_results.push(element[0]);
             invoke_results.push(element[1]);
             overall_results.push(element[2]);
+            detailed_delay_results.push(element[3]);
         });
 
         // For query stats
@@ -204,6 +227,16 @@ function processResult(results, label){
 
         log('###test result:###');
         printTable(resultTable);
+
+        // For the latency breakdown
+        if (Blockchain.mergeDetailedDelayStats(detailed_delay_results) === 1) {
+            let detailed_delay_stats = detailed_delay_results[0];
+            detailed_delay_stats.label = label;
+            let detailed_stat_table = [];
+            detailed_stat_table.push(getDetailedDelayTitle());
+            detailed_stat_table.push(getDetailedDelayValue(detailed_delay_stats));
+            printTable(detailed_stat_table);
+        }
 
 //        let idx = report.addBenchmarkRound(label);
 //        report.setRoundPerformance(idx, resultTable);

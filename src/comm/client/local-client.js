@@ -328,6 +328,12 @@ function doTest(msg) {
             allStats.push(bc.createNullDefaultTxStats());
         }
 
+        if (detailedDelayStats.length > 0) {
+            allStats.push(detailedDelayStats[0]);
+        } else {
+            allStats.push(bc.createNullDetailedDelayStats());
+        }
+
         return Promise.resolve(allStats);
     }).catch((err) => {
         clearUpdateInter();

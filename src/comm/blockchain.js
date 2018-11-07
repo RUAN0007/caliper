@@ -223,6 +223,7 @@ class Blockchain {
         let s2e_delay_sum = 0; // delay from submission to endorsement
         let e2o_delay_sum = 0;  // delay from endorsement to ordering
         let o2f_delay_sum = 0;  // delay from ordering to commit
+        let delay_sum = 0;
         let succ_count = 0;
 
         for(let i = 0 ; i < results.length ; i++) {
@@ -237,6 +238,7 @@ class Blockchain {
                 s2e_delay_sum += (endorse - create) / 1000; 
                 e2o_delay_sum += (order - endorse) / 1000; 
                 o2f_delay_sum += (commit - order) / 1000; 
+                delay_sum += (commit - create) / 1000;
             }  // end if
         }  // end for
 
@@ -245,6 +247,7 @@ class Blockchain {
             's2e_sum' : s2e_delay_sum,
             'e2o_sum' : e2o_delay_sum,
             'o2f_sum' : o2f_delay_sum,
+            'delay_sum' : delay_sum,
         };
         return stats;     
     }
@@ -334,19 +337,41 @@ class Blockchain {
             'succ' : 0,
             's2e_sum' : 0,
             'e2o_sum' : 0,
-            'o2f_sum' : 0
+            'o2f_sum' : 0,
+            'delay_sum' : 0
         };
         return stats;;
     }
 
     static mergeDetailedDelayStats(results) {
-        let r = results[0];
-        for(let i = 1 ; i < results.length ; i++) {
+        let skip = 0;
+        for(let i = 0 ; i < results.length ; i++) {
             let result = results[i];
-            r.succ += result.succ;
-            r.s2e_sum += result.s2e_sum;
-            r.e2o_sum += result.e2o_sum;
-            r.o2f_sum += result.o2f_sum;
+            if(!result.hasOwnProperty('succ') || result.succ === 0) {
+                skip++;
+            }
+            else {
+                break;
+            }
+        }
+        if(skip > 0) {
+            results.splice(0, skip);
+        }
+
+        if (results.length > 0) {
+            let r = results[0];
+            for(let i = 1 ; i < results.length ; i++) {
+                let result = results[i];
+                r.succ += result.succ;
+                r.s2e_sum += result.s2e_sum;
+                r.e2o_sum += result.e2o_sum;
+                r.o2f_sum += result.o2f_sum;
+                r.delay_sum += result.delay_sum;
+            }
+            return 1;
+
+        } else {
+            return 0;
         }
     }
 }
