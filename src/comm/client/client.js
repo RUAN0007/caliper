@@ -219,6 +219,8 @@ class Client{
      * @return {Promise} promise object
      */
     _startLocalTest(message, clientArgs) {
+        message.clients = this.number;
+        message.hostIdx = 0;
         message.totalClients = this.number;
         return clientUtil.startTest(this.number, message, clientArgs, this.updates.data, this.results);
     }
@@ -386,6 +388,7 @@ class Client{
             let data;
             if(Array.isArray(clientArgs)) {
                 let msg = message;
+                msg.hostIdx = idx;
                 msg.clientargs = clientArgs.slice(idx * argsSlice, idx * argsSlice+argsSlice);
                 data = new Buffer(JSON.stringify(msg));
             }

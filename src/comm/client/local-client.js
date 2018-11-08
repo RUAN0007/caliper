@@ -214,7 +214,8 @@ async function runFixedNumber(msg, cb, context) {
     log('Info: client ' + process.pid +  ' start test runFixedNumber()' + (cb.info ? (':' + cb.info) : ''));
     let rateControl = new RateControl(msg.rateControl, blockchain);
     rateControl.init(msg);
-
+    msg.args.clientIdx = msg.hostIdx * msg.clients + msg.clientIdx;
+    msg.args.numb = msg.numb;
     await cb.init(blockchain, context, msg.args);
     startTime = Date.now();
 
@@ -245,6 +246,7 @@ async function runDuration(msg, cb, context) {
     rateControl.init(msg);
     const duration = msg.txDuration; // duration in seconds
 
+    msg.args.clientIdx = msg.hostIdx * msg.clients + msg.clientIdx;
     await cb.init(blockchain, context, msg.args);
     startTime = Date.now();
 
