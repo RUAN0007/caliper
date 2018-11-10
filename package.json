@@ -22,6 +22,7 @@
   "dependencies": {
     "cbor": "^3.0.3",
     "commander": "^2.11.0",
+    "discrete-sampling": "^1.0.3",
     "dockerode": "^2.5.0",
     "fabric-ca-client": "1.2.0",
     "fabric-client": "1.2.0",
@@ -32,6 +33,7 @@
     "node-zookeeper-client": "^0.2.2",
     "ora": "^1.2.0",
     "pidusage": "^1.1.6",
+    "prob.js": "^1.0.6",
     "ps-node": "^0.1.6",
     "request": "^2.81.0",
     "request-promise": "^4.2.1",
