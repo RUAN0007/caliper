@@ -20,19 +20,13 @@
           "key": "network/fabric/simplenetwork/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/0d2b2fc385b10fa59003217e1bb5af2d24a3d762266e287867a1bc290eb44657_sk",
           "cert": "network/fabric/simplenetwork/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem"
         },
-        "ca": {
-          "url": "https://localhost:7054",
-          "name": "ca-org1"
-        },
         "peer1": {
           "requests": "grpcs://localhost:7051",
-          "events": "grpcs://localhost:7053",
           "server-hostname": "peer0.org1.example.com",
           "tls_cacerts": "network/fabric/simplenetwork/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt"
         },
         "peer2": {
           "requests": "grpcs://localhost:7057",
-          "events": "grpcs://localhost:7059",
           "server-hostname": "peer1.org1.example.com",
           "tls_cacerts": "network/fabric/simplenetwork/crypto-config/peerOrganizations/org1.example.com/peers/peer1.org1.example.com/tls/ca.crt"
         }
@@ -40,19 +34,13 @@
       "org2": {
         "name": "peerOrg2",
         "mspid": "Org2MSP",
-        "ca": {
-          "url": "https://localhost:8054",
-          "name": "ca-org2"
-        },
         "peer1": {
           "requests": "grpcs://localhost:8051",
-          "events": "grpcs://localhost:8053",
           "server-hostname": "peer0.org2.example.com",
           "tls_cacerts": "network/fabric/simplenetwork/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt"
         },
         "peer2": {
           "requests": "grpcs://localhost:8057",
-          "events": "grpcs://localhost:8059",
           "server-hostname": "peer1.org2.example.com",
           "tls_cacerts": "network/fabric/simplenetwork/crypto-config/peerOrganizations/org2.example.com/peers/peer1.org2.example.com/tls/ca.crt"
         }
