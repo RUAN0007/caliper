@@ -28,7 +28,7 @@
 const fs = require('fs');
 
 const Client = require('fabric-client');
-const EventHub = require('fabric-client/lib/EventHub.js');
+// const EventHub = require('fabric-client/lib/EventHub.js');
 
 const testUtil = require('./util.js');
 const commUtils = require('../comm/util');
@@ -36,20 +36,7 @@ const commUtils = require('../comm/util');
 //let the_user = null;
 let tx_id = null;
 let ORGS;
-const allEventhubs = [];
 
-/**
- * Disconnect from the given list of event hubs.
- * @param {object[]} ehs A collection of event hubs.
- */
-function disconnect(ehs) {
-    for(let key in ehs) {
-        const eventhub = ehs[key];
-        if (eventhub && eventhub.isconnected()) {
-            eventhub.disconnect();
-        }
-    }
-}
 
 /**
  * Join the peers of the given organization to the given channel.
@@ -105,9 +92,9 @@ function joinChannel(org, channelName) {
         for (let key in ORGS[org]) {
             if (ORGS[org].hasOwnProperty(key)) {
                 if(key.indexOf('peer') === 0) {
+                       
                     data = fs.readFileSync(commUtils.resolvePath(ORGS[org][key].tls_cacerts));
-                    targets.push(
-                        client.newPeer(
+                    targets.push(client.newPeer(
                             ORGS[org][key].requests,
                             {
                                 pem: Buffer.from(data).toString(),
@@ -115,68 +102,36 @@ function joinChannel(org, channelName) {
                             }
                         )
                     );
-
-                    let eh = new EventHub(client);  //client.newEventHub();
-                    eh.setPeerAddr(
-                        ORGS[org][key].events,
-                        {
-                            pem: Buffer.from(data).toString(),
-                            'ssl-target-name-override': ORGS[org][key]['server-hostname']
-                        }
-                    );
-                    eh.connect();
-                    eventhubs.push(eh);
-                    allEventhubs.push(eh);
                 }
             }
         }
+        var promises = [];
+        promises.push(new Promise(resolve => setTimeout(resolve, 10000)));
 
-        const eventPromises = [];
-        eventhubs.forEach((eh) => {
-            let txPromise = new Promise((resolve, reject) => {
-                let handle = setTimeout(reject, 30000);
-
-                eh.registerBlockEvent((block) => {
-                    clearTimeout(handle);
-
-                    // in real-world situations, a peer may have more than one channel so
-                    // we must check that this block came from the channel we asked the peer to join
-                    if(block.data.data.length === 1) {
-                        // Config block must only contain one transaction
-                        const channel_header = block.data.data[0].payload.header.channel_header;
-                        if (channel_header.channel_id === channelName) {
-                            resolve();
-                        }
-                        else {
-                            reject(new Error('invalid channel name'));
-                        }
-                    }
-                });
-            });
-
-            eventPromises.push(txPromise);
-        });
-        tx_id = client.newTransactionID();
+        tx_id = client.newTransactionID(true);
         let request = {
             targets : targets,
             block : genesis_block,
             txId : tx_id
         };
         let sendPromise = channel.joinChannel(request);
-        return Promise.all([sendPromise].concat(eventPromises));
-    })
-        .then((results) => {
-            disconnect(eventhubs);
-            if(results[0] && results[0][0] && results[0][0].response && results[0][0].response.status === 200) {
-                // t.pass(util.format('Successfully joined peers in organization %s to join the channel', orgName));
+        promises.push(sendPromise);
+        return Promise.all(promises);
+    }).then((results) => {
+        let peers_results = results.pop();
+        for(let i in peers_results) {
+            let peer_result = peers_results[i];
+            if(peer_result.response && peer_result.response.status == 200) {
+                // commUtils.log('Successfully joined peer to the channel %s',channelName);
             } else {
-                throw new Error('Unexpected join channel response');
+                throw new Error('Failed to join peer to the channel ' + channelName);
             }
-        })
-        .catch((err)=>{
-            disconnect(eventhubs);
-            return Promise.reject(err);
-        });
+        }
+    }).catch((err)=>{
+        // disconnect(eventhubs);
+
+        return Promise.reject(err);
+    });
 }
 
 module.exports.run = function (config_path) {
@@ -212,7 +167,7 @@ module.exports.run = function (config_path) {
                 return resolve();
             })
             .catch((err)=>{
-                t.fail('Failed to join peers, ' + (err.stack?err.stack:err));
+                t.fail('Failed to join peers, ' + err);
                 return reject(new Error('Fabric: Join channel failed'));
             });
     });

@@ -26,7 +26,7 @@ const util = require('util');
 //const KEYUTIL = jsrsa.KEYUTIL;
 
 const Client = require('fabric-client');
-const copService = require('fabric-ca-client/lib/FabricCAClientImpl.js');
+// const copService = require('fabric-ca-client/lib/FabricCAClientImpl.js');
 const User = require('fabric-client/lib/User.js');
 //const CryptoSuite = require('fabric-client/lib/impl/CryptoSuite_ECDSA_AES.js');
 //const KeyStore = require('fabric-client/lib/impl/CryptoKeyStore.js');
@@ -163,48 +163,49 @@ const tlsOptions = {
  * @return {Promise<User>} The retrieved and enrolled user object.
  */
 function getMember(username, password, client, userOrg) {
-    const caUrl = ORGS[userOrg].ca.url;
+    return Promise.reject("Not Implemented for getMember()");
+    // const caUrl = ORGS[userOrg].ca.url;
 
-    return client.getUserContext(username, true)
-        .then((user) => {
-            return new Promise((resolve, reject) => {
-                if (user && user.isEnrolled()) {
-                    return resolve(user);
-                }
+    // return client.getUserContext(username, true)
+    //     .then((user) => {
+    //         return new Promise((resolve, reject) => {
+    //             if (user && user.isEnrolled()) {
+    //                 return resolve(user);
+    //             }
 
-                const member = new User(username);
-                let cryptoSuite = client.getCryptoSuite();
-                if (!cryptoSuite) {
-                    cryptoSuite = Client.newCryptoSuite();
-                    if (userOrg) {
-                        cryptoSuite.setCryptoKeyStore(Client.newCryptoKeyStore({path: module.exports.storePathForOrg(ORGS[userOrg].name)}));
-                        client.setCryptoSuite(cryptoSuite);
-                    }
-                }
-                member.setCryptoSuite(cryptoSuite);
+    //             const member = new User(username);
+    //             let cryptoSuite = client.getCryptoSuite();
+    //             if (!cryptoSuite) {
+    //                 cryptoSuite = Client.newCryptoSuite();
+    //                 if (userOrg) {
+    //                     cryptoSuite.setCryptoKeyStore(Client.newCryptoKeyStore({path: module.exports.storePathForOrg(ORGS[userOrg].name)}));
+    //                     client.setCryptoSuite(cryptoSuite);
+    //                 }
+    //             }
+    //             member.setCryptoSuite(cryptoSuite);
 
-                // need to enroll it with CA server
-                const cop = new copService(caUrl, tlsOptions, ORGS[userOrg].ca.name, cryptoSuite);
+    //             // need to enroll it with CA server
+    //             const cop = new copService(caUrl, tlsOptions, ORGS[userOrg].ca.name, cryptoSuite);
 
-                return cop.enroll({
-                    enrollmentID: username,
-                    enrollmentSecret: password
-                }).then((enrollment) => {
-                    return member.setEnrollment(enrollment.key, enrollment.certificate, ORGS[userOrg].mspid);
-                }).then(() => {
-                    let skipPersistence = false;
-                    if (!client.getStateStore()) {
-                        skipPersistence = true;
-                    }
-                    return client.setUserContext(member, skipPersistence);
-                }).then(() => {
-                    return resolve(member);
-                }).catch((err) => {
-                    // TODO: will remove t argument later
-                    commUtils.log('Failed to enroll and persist user. Error: ' + (err.stack ? err.stack : err));
-                });
-            });
-        });
+    //             return cop.enroll({
+    //                 enrollmentID: username,
+    //                 enrollmentSecret: password
+    //             }).then((enrollment) => {
+    //                 return member.setEnrollment(enrollment.key, enrollment.certificate, ORGS[userOrg].mspid);
+    //             }).then(() => {
+    //                 let skipPersistence = false;
+    //                 if (!client.getStateStore()) {
+    //                     skipPersistence = true;
+    //                 }
+    //                 return client.setUserContext(member, skipPersistence);
+    //             }).then(() => {
+    //                 return resolve(member);
+    //             }).catch((err) => {
+    //                 // TODO: will remove t argument later
+    //                 commUtils.log('Failed to enroll and persist user. Error: ' + (err.stack ? err.stack : err));
+    //             });
+    //         });
+    //     });
 }
 
 /**

@@ -279,17 +279,17 @@ function instantiateChaincode(chaincode, endorsement_policy, upgrade){
         }
 
         // an event listener can only register with a peer in its own org
-        let data = fs.readFileSync(commUtils.resolvePath(ORGS[userOrg][eventPeer].tls_cacerts));
-        let eh = client.newEventHub();
-        eh.setPeerAddr(
-            ORGS[userOrg][eventPeer].events,
-            {
-                pem: Buffer.from(data).toString(),
-                'ssl-target-name-override': ORGS[userOrg][eventPeer]['server-hostname']
-            }
-        );
-        eh.connect();
-        eventhubs.push(eh);
+        // let data = fs.readFileSync(commUtils.resolvePath(ORGS[userOrg][eventPeer].tls_cacerts));
+        // let eh = client.newEventHub();
+        // eh.setPeerAddr(
+        //     ORGS[userOrg][eventPeer].events,
+        //     {
+        //         pem: Buffer.from(data).toString(),
+        //         'ssl-target-name-override': ORGS[userOrg][eventPeer]['server-hostname']
+        //     }
+        // );
+        // eh.connect();
+        // eventhubs.push(eh);
 
         // read the config block from the orderer for the channel
         // and initialize the verify MSPs based on the participating
@@ -315,9 +315,7 @@ function instantiateChaincode(chaincode, endorsement_policy, upgrade){
     }, (err) => {
         throw new Error('Failed to initialize the channel'+ (err.stack ? err.stack : err));
     }).then((results) => {
-
         const proposalResponses = results[0];
-
         const proposal = results[1];
         let all_good = true;
         for(let i in proposalResponses) {
@@ -327,53 +325,69 @@ function instantiateChaincode(chaincode, endorsement_policy, upgrade){
             }
             all_good = all_good && one_good;
         }
-        if (all_good) {
-            const request = {
-                proposalResponses: proposalResponses,
-                proposal: proposal,
-            };
-
-            // set the transaction listener and set a timeout of 5 mins
-            // if the transaction did not get committed within the timeout period,
-            // fail the test
-            const deployId = tx_id.getTransactionID();
-
-            const eventPromises = [];
-            eventhubs.forEach((eh) => {
-                let txPromise = new Promise((resolve, reject) => {
-                    let handle = setTimeout(reject, 300000);
-
-                    eh.registerTxEvent(deployId.toString(), (tx, code) => {
-                        clearTimeout(handle);
-                        eh.unregisterTxEvent(deployId);
-
-                        if (code !== 'VALID') {
-                            commUtils.log('The chaincode ' + type + ' transaction was invalid, code = ' + code);
-                            reject();
-                        } else {
-                            commUtils.log('The chaincode ' + type + ' transaction was valid.');
-                            resolve();
-                        }
-                    });
-                });
-                eventPromises.push(txPromise);
-            });
-
-            const sendPromise = channel.sendTransaction(request);
-            return Promise.all([sendPromise].concat(eventPromises))
-                .then((results) => {
-                    return results[0]; // just first results are from orderer, the rest are from the peer events
-
-                }).catch((err) => {
-                    throw new Error('Failed to send ' + type + ' transaction and get notifications within the timeout period.');
-                });
-
-        } else {
+        if (!all_good) {
             throw new Error('Failed to send ' + type + ' Proposal or receive valid response. Response null or status is not 200. exiting...');
         }
+
+        const tx_id_string = tx_id.getTransactionID();
+
+        var promises = [];
+        let event_hubs = channel.getChannelEventHubsForOrg();
+        event_hubs.forEach((eh) => {
+            logger.debug('invokeEventPromise - setting up event');
+            let invokeEventPromise = new Promise((resolve, reject) => {
+                let event_timeout = setTimeout(() => {
+                    let message = 'REQUEST_TIMEOUT:' + eh.getPeerAddr();
+                    reject(new Error(message));
+                    eh.disconnect();
+                }, 3000);
+                eh.registerTxEvent(tx_id_string, (tx, code, block_num) => {
+                    // commUtils.log('The chaincode invoke chaincode transaction has been committed on peer ' + eh.getPeerAddr());
+                    // commUtils.log('Transaction ' + tx + ' ' + code + ' has status of %s in block ' + block_num);
+                    clearTimeout(event_timeout);
+
+                    if (code !== 'VALID') {
+                        let message = 'The invoke chaincode transaction was invalid, code:' + code;
+                        reject(new Error(message));
+                    } else {
+                        let message = 'The invoke chaincode transaction was valid.';
+                        // commUtils.log(message);
+                        resolve(message);
+                    }
+                }, (err) => {
+                    clearTimeout(event_timeout);
+                    reject(err);
+                },
+                    // the default for 'unregister' is true for transaction listeners
+                    // so no real need to set here, however for 'disconnect'
+                    // the default is false as most event hubs are long running
+                    // in this use case we are using it only once
+                    {unregister: true, disconnect: true}
+                );
+                eh.connect();
+            });
+            promises.push(invokeEventPromise);
+        });
+
+        const request = {
+            proposalResponses: proposalResponses,
+            proposal: proposal,
+            txId: tx_id
+        };
+
+        const sendPromise = channel.sendTransaction(request);
+        promises.push(sendPromise);
+
+    return Promise.all(promises)
+        .then((results) => {
+            let response = results.pop(); //  orderer results are last in the results
+            return response;
+        }).catch((err) => {
+            throw new Error('Failed to send ' + type + ' transaction and get notifications within the timeout period.');
+        });
+
     }, (err) => {
         throw new Error('Failed to send ' + type + ' proposal due to error: ' + (err.stack ? err.stack : err));
-
     }).then((response) => {
         //TODO should look into the event responses
         if (!(response instanceof Error) && response.status === 'SUCCESS') {
@@ -383,15 +397,11 @@ function instantiateChaincode(chaincode, endorsement_policy, upgrade){
         }
     }, (err) => {
         throw new Error('Failed to send instantiate due to error: ' + (err.stack ? err.stack : err));
-    })
-        .then(()=>{
-            disconnect(eventhubs);
-            return Promise.resolve();
-        })
-        .catch((err) => {
-            disconnect(eventhubs);
-            return Promise.reject(err);
-        });
+    }).then(()=>{
+        return Promise.resolve();
+    }).catch((err) => {
+        return Promise.reject(err);
+    });
 }
 
 module.exports.instantiateChaincode = instantiateChaincode;
@@ -484,18 +494,20 @@ function getcontext(channelConfig) {
 
                 // an event listener can only register with the peer in its own org
                 if(org === userOrg) {
-                    let eh = client.newEventHub();
-                    eh.setPeerAddr(
-                        peerInfo.events,
-                        {
-                            pem: Buffer.from(data).toString(),
-                            'ssl-target-name-override': peerInfo['server-hostname'],
-                            //'request-timeout': 120000
-                            'grpc.keepalive_timeout_ms' : 3000, // time to respond to the ping, 3 seconds
-                            'grpc.keepalive_time_ms' : 360000   // time to wait for ping response, 6 minutes
-                            // 'grpc.http2.keepalive_time' : 15
-                        }
-                    );
+                    // let eh = client.newEventHub();
+                    // eh.setPeerAddr(
+                    //     peerInfo.events,
+                    //     {
+                    //         pem: Buffer.from(data).toString(),
+                    //         'ssl-target-name-override': peerInfo['server-hostname'],
+                    //         //'request-timeout': 120000
+                    //         'grpc.keepalive_timeout_ms' : 3000, // time to respond to the ping, 3 seconds
+                    //         'grpc.keepalive_time_ms' : 360000   // time to wait for ping response, 6 minutes
+                    //         // 'grpc.http2.keepalive_time' : 15
+                    //     }
+                    // );
+
+                    let eh = channel.newChannelEventHub(peer);
                     eventhubs.push(eh);
                 }
             }
