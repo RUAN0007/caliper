@@ -91,8 +91,7 @@
       "policy": { "2-of": [{"signed-by": 0}, {"signed-by": 1}]}
     },
     "context": {
-      "insert": "mychannel",
-      "txn": "mychannel"
+      "insert": "mychannel"
     }
   },
   "info" : {

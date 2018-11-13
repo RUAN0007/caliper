@@ -21,13 +21,6 @@
         "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 50}}],
         "arguments": {"txnPerBatch":10, "fieldCount": 10, "fieldLength": 15, "orderedInserts": 1},
         "callback" : "benchmark/ycsb/insert.js"
-      },
-      {
-        "label" : "txn",
-        "txNumber" : [5000],
-        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 50}}],
-        "arguments": {"txnPerBatch":10, "distribution": "zipf", "zipf_s": 1.0, "recordCount": 1000, "readRatio": 0.0, "updateRatio": 0.0, "insertRatio": 0.0, "deleteRatio": 0.0, "modifyRatio": 1.0},
-        "callback" : "benchmark/ycsb/txn.js"
       }
     ]
   },
