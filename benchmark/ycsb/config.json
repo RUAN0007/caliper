@@ -1,12 +1,12 @@
 {
    "blockchain": {
-        "type": "fabric",
-        "config": "benchmark/ycsb/fabric.json"
+        "type": "fabric"
   },
   "command" : {
-    "start": "docker-compose -f network/fabric/simplenetwork/docker-compose.yaml up -d",
-    "end" : "docker-compose -f network/fabric/simplenetwork/docker-compose.yaml down;docker rm $(docker ps -aq)"
+    "start": "sleep 5",
+    "end" : "sleep 5"
   },
+  "chaincodes": [{"id": "ycsb", "path": "contract/fabric/ycsb", "language":"golang", "version": "v0"}],
   "test": {
     "name": "ycsb",
     "description" : "This is ycsb benchmark for caliper",
@@ -23,12 +23,5 @@
         "callback" : "benchmark/ycsb/insert.js"
       }
     ]
-  },
-  "monitor": {
-    "type": "docker",
-    "docker":{
-      "name": ["all"]
-    },
-    "interval": 1
   }
 }

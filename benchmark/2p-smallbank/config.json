@@ -6,6 +6,7 @@
     "start": "sleep 5",
     "end" : "sleep 5"
   },
+  "chaincodes": [{"id": "smallbank", "path": "contract/fabric/smallbank", "language":"golang", "version": "v0"}],
   "test": {
     "name": "smallbank",
     "description" : "This is smallbank benchmark for caliper on kafka order service",
