@@ -219,8 +219,7 @@ def init_peers():
     for i in range(config.PEER_START, config.PEER_END+1):
         peer_node = "slave-" + str(i)
         remote_cmd(peer_node, "removeUnwantedImages")
-        remote_cmd(peer_node, "docker pull hyperledger/fabric-ccenv:1.2.0")
-        remote_cmd(peer_node, "docker pull hyperledger/fabric-ccenv:latest")
+        remote_cmd(peer_node, "docker pull hyperledger/fabric-ccenv:1.3.0")
         bash_rm(peer_node, config.PEER_DATA)
         bash_rm(peer_node, config.PEER_LOG)
 
@@ -248,19 +247,19 @@ def main():
         kfk_configs = init_KFK()
         start_KFK(kfk_configs)
 
-        start_CA()
+#        start_CA()
 
         init_orderers()
         start_orderers()
 
         init_peers()
         start_peers()
-        if sys.argv[2] == "zk": 
-			start_zk_clients()
+#        if sys.argv[2] == "zk": 
+		#	start_zk_clients()
     elif sys.argv[1] == "down":
         stop_peers()
         stop_orderers()
-        stop_CA()
+#        stop_CA()
         stop_KFK()
         stop_ZK()
     else:
