@@ -214,6 +214,7 @@ async function runFixedNumber(msg, cb, context) {
     log('Info: client ' + process.pid +  ' start test runFixedNumber()' + (cb.info ? (':' + cb.info) : ''));
     let rateControl = new RateControl(msg.rateControl, blockchain);
     rateControl.init(msg);
+    if (msg.args === undefined) {msg.args = {};}
     msg.args.clientIdx = msg.hostIdx * msg.clients + msg.clientIdx;
     msg.args.numb = msg.numb;
     await cb.init(blockchain, context, msg.args);
