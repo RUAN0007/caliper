@@ -73,8 +73,8 @@ class Blockchain {
     * Install smart contract(s), detail informations are defined in the blockchain configuration file
     * @return {Promise} promise object
     */
-    installSmartContract() {
-        return this.bcObj.installSmartContract();
+    installSmartContract(chaincodes_config) {
+        return this.bcObj.installSmartContract(chaincodes_config);
     }
 
     /**

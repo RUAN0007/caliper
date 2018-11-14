@@ -353,8 +353,8 @@ module.exports.run = function(configFile, networkFile) {
         client  = new Client(absConfigFile);
         //createReport();
         demo.init();
+        let config = require(absConfigFile);
         let startPromise = new Promise((resolve, reject) => {
-            let config = require(absConfigFile);
             if (config.hasOwnProperty('command') && config.command.hasOwnProperty('start')){
                 log(config.command.start);
                 let child = exec(config.command.start, {cwd: absCaliperDir}, (err, stdout, stderr) => {
@@ -370,11 +370,14 @@ module.exports.run = function(configFile, networkFile) {
                 resolve();
             }
         });
-
+        if (!config.hasOwnProperty('chaincodes')) {
+          reject(new Error("No chaincodes config in client config file."));
+        } 
+        let chaincodes_config = config.chaincodes;
         startPromise.then(() => {
             return blockchain.init();
         }).then( () => {
-            return blockchain.installSmartContract();
+            return blockchain.installSmartContract(chaincodes_config);
         }).then( () => {
             return client.init().then((number)=>{
                 return blockchain.prepareClients(number);
@@ -410,7 +413,6 @@ module.exports.run = function(configFile, networkFile) {
              return Promise.resolve();
         }).then( () => {
             client.stop();
-            let config = require(absConfigFile);
             if (config.hasOwnProperty('command') && config.command.hasOwnProperty('end')){
                 log(config.command.end);
                 let end = exec(config.command.end, {cwd: absCaliperDir});

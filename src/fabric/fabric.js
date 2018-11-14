@@ -50,10 +50,10 @@ class Fabric extends BlockchainInterface{
      * Deploy the chaincode specified in the network configuration file to all peers.
      * @return {Promise} The return promise.
      */
-    installSmartContract() {
+    installSmartContract(chaincodes_config) {
         // todo: now all chaincodes are installed and instantiated in all peers, should extend this later
-        return impl_install.run(this.configPath).then(() => {
-            return impl_instantiate.run(this.configPath);
+        return impl_install.run(chaincodes_config, this.configPath).then(() => {
+            return impl_instantiate.run(chaincodes_config, this.configPath);
         })
             .catch((err) => {
                 commUtils.log('fabric.installSmartContract() failed, ' + (err.stack ? err.stack : err));

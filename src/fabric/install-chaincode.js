@@ -30,11 +30,11 @@ const e2eUtils = require('./e2eUtils.js');
 const testUtil = require('./util.js');
 const Client = require('fabric-client');
 
-module.exports.run = function (config_path) {
+module.exports.run = function (chaincodes_config, config_path) {
     Client.addConfigFile(config_path);
     testUtil.setupChaincodeDeploy();
     const fabricSettings = Client.getConfigSetting('fabric');
-    let chaincodes = fabricSettings.chaincodes;
+    let chaincodes = chaincodes_config;
     if(typeof chaincodes === 'undefined' || chaincodes.length === 0) {
         return Promise.resolve();
     }
@@ -44,12 +44,21 @@ module.exports.run = function (config_path) {
         chaincodes.reduce(function(prev, chaincode){
             return prev.then(() => {
                 let promises = [];
-                let channel  = testUtil.getChannel(chaincode.channel);
-                if(channel === null) {
+                let channel_obj;
+                if (!chaincode.hasOwnProperty("channel")) {
+                  channel_obj  = testUtil.getDefaultChannel();
+                  // channel field in chaincode will be later used as the channel name in e2eUtils
+                  chaincode.channel = channel_obj.name;
+                } else {
+                  channel_obj  = testUtil.getChannel(chaincode.channel);
+                }
+
+
+                if(channel_obj === null) {
                     throw new Error('could not find channel in config');
                 }
-                for(let v in channel.organizations) {
-                    promises.push(e2eUtils.installChaincode(channel.organizations[v], chaincode));
+                for(let v in channel_obj.organizations) {
+                    promises.push(e2eUtils.installChaincode(channel_obj.organizations[v], chaincode));
                 }
 
                 return Promise.all(promises).then(() => {

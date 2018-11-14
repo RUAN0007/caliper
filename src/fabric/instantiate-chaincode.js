@@ -31,11 +31,11 @@ const commUtils = require('../comm/util');
 
 const Client = require('fabric-client');
 
-module.exports.run = function (config_path) {
+module.exports.run = function (chaincodes_config, config_path) {
     Client.addConfigFile(config_path);
     const fabricSettings = Client.getConfigSetting('fabric');
     const policy = fabricSettings['endorsement-policy'];  // TODO: support mulitple policies
-    let chaincodes = fabricSettings.chaincodes;
+    let chaincodes = chaincodes_config;
     if(typeof chaincodes === 'undefined' || chaincodes.length === 0) {
         return Promise.resolve();
     }
@@ -45,6 +45,10 @@ module.exports.run = function (config_path) {
         const t = global.tapeObj;
         t.comment('Instantiate chaincode......');
         chaincodes.reduce(function(prev, chaincode){
+            if(!chaincode.hasOwnProperty("channel")) {
+                // channel field in chaincode will be later used as the channel name in e2eUtils
+                chaincode.channel = testUtil.getDefaultChannel().name;
+            }
             return prev.then(() => {
                 return e2eUtils.instantiateChaincode(chaincode, policy, false).then(() => {
                     t.pass('Instantiated chaincode ' + chaincode.id + ' successfully ');

@@ -32,7 +32,7 @@ class BlockchainInterface {
     /**
      * Install smart contract(s)
      */
-    installSmartContract() {
+    installSmartContract(chaincodes_config) {
         throw new Error('installSmartContract is not implemented for this blockchain system');
     }
 
