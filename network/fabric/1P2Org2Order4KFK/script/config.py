@@ -28,16 +28,16 @@ Preliminaries:
 
 EXP_DIR="/users/ruanpc/caliper/network/fabric/1P2Org2Order4KFK"
 
-ZK_START=10
-ZK_END=12
+ZK_START=40
+ZK_END=42
 ZK_PORT=2181
 ZK_DATA="/data/ruanpc/zookeeper"
 ZK_CONFIGFILE_TEMPLATE=EXP_DIR+"/zookeeper.properties.template"
 ZK_CONFIGFILE=EXP_DIR+"/zookeeper.properties"
 
 KFK_DATA="/data/ruanpc/kafka"
-KFK_START=10
-KFK_END=13
+KFK_START=40
+KFK_END=43
 KFK_CONFIGFILE_TEMPLATE=EXP_DIR+"/kafka-config/server.properties"
 KFK_CONFIGFILE=EXP_DIR+"/kafka-config/server-{}.properties"
 KFK_LOG="/data/ruanpc/kafka_log"
@@ -49,8 +49,8 @@ FABRIC_CFG_DIR=EXP_DIR+"/fabric-config"
 CRYPTO_CFG_DIR=EXP_DIR+"/crypto-config"
 CHANNEL_ARTIFACT_DIR=EXP_DIR+"/channel-artifacts"
 
-ORDERER_START=8
-ORDERER_END=9
+ORDERER_START=30
+ORDERER_END=31
 ORDERER_DATA="/data/ruanpc/hyperledger/production/orderer"
 ORDERER_LOG="/data/ruanpc/orderer"
 ORDERER_GENESIS_BLK=CHANNEL_ARTIFACT_DIR + "/genesis.block"

@@ -25,7 +25,7 @@ Organizations:
         ID: OrdererMSP
 
         # MSPDir is the filesystem path which contains the MSP configuration
-        MSPDir: /users/ruanpc/caliper/network/1P2Org2Order4KFK/crypto-config/ordererOrganizations/example.com/msp
+        MSPDir: /users/ruanpc/caliper/network/fabric/1P2Org2Order4KFK/crypto-config/ordererOrganizations/example.com/msp
 
     - &Org1
         # DefaultOrg defines the organization which is used in the sampleconfig
@@ -35,7 +35,7 @@ Organizations:
         # ID to load the MSP definition as
         ID: Org1MSP
 
-        MSPDir: /users/ruanpc/caliper/network/1P2Org2Order4KFK/crypto-config/peerOrganizations/org1.example.com/msp
+        MSPDir: /users/ruanpc/caliper/network/fabric/1P2Org2Order4KFK/crypto-config/peerOrganizations/org1.example.com/msp
 
         AnchorPeers:
             # AnchorPeers defines the location of peers which can be used
@@ -52,7 +52,7 @@ Organizations:
         # ID to load the MSP definition as
         ID: Org2MSP
 
-        MSPDir: /users/ruanpc/caliper/network/1P2Org2Order4KFK/crypto-config/peerOrganizations/org2.example.com/msp 
+        MSPDir: /users/ruanpc/caliper/network/fabric/1P2Org2Order4KFK/crypto-config/peerOrganizations/org2.example.com/msp 
 
         AnchorPeers:
             # AnchorPeers defines the location of peers which can be used
@@ -139,8 +139,8 @@ Orderer: &OrdererDefaults
     OrdererType: kafka
 
     Addresses:
-        - slave-8:7050
-        - slave-9:7050
+        - slave-30:7050
+        - slave-31:7050
 
     # Batch Timeout: The amount of time to wait before creating a batch
     BatchTimeout: 2s
@@ -164,10 +164,10 @@ Orderer: &OrdererDefaults
         # Brokers: A list of Kafka brokers to which the orderer connects
         # NOTE: Use IP:port notation
         Brokers:
-            - slave-10:9092
-            #- slave-11:9092
-            #- slave-12:9092
-            #- slave-13:9092
+            - slave-40:9092
+            #- slave-41:9092
+            #- slave-42:9092
+            #- slave-43:9092
 
     # Organizations is the list of orgs which are defined as participants on
     # the orderer side of the network
