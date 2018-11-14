@@ -1,11 +1,10 @@
 {
    "blockchain": {
-        "type": "fabric",
-        "config": "benchmark/2p-smallbank/fabric.json"
+        "type": "fabric"
   },
   "command" : {
-    "start": "python network/fabric/1P2Org2Order4KFK/script/network.py up; sleep 5",
-    "end" : "python network/fabric/1P2Org2Order4KFK/script/network.py down;sleep 5"
+    "start": "sleep 5",
+    "end" : "sleep 5"
   },
   "test": {
     "name": "smallbank",
@@ -17,9 +16,9 @@
     "rounds": [
       {
         "label" : "smallOperations",
-        "txNumber" : [2000],
-        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 200}}],
-        "arguments": {"accounts":400, "txnPerBatch":10},
+        "txNumber" : [1000],
+        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 40}}],
+        "arguments": {"accounts":1000, "txnPerBatch":10},
         "callback" : "benchmark/kafka-smallbank/smallbankOperations.js"
       },
       {
@@ -28,12 +27,5 @@
         "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 200}}],
         "callback" : "benchmark/kafka-smallbank/query.js"
       }]
-  },
-  "monitor": {
-    "type": "docker",
-    "docker":{
-      "name": ["all"]
-    },
-    "interval": 1
   }
 }
