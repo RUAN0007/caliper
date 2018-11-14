@@ -1,0 +1,42 @@
+{
+   "blockchain": {
+        "type": "fabric",
+        "config": "benchmark/smallbank/fabric.json"
+  },
+  "command" : {
+    "start": "docker-compose -f network/fabric/simplenetwork/docker-compose.yaml up -d",
+    "end" : "docker-compose -f network/fabric/simplenetwork/docker-compose.yaml down;docker rm $(docker ps -aq)"
+  },
+    "chaincodes": [{"id": "smallbank", "path": "contract/fabric/smallbank", "language":"golang", "version": "v0"}],
+  "test": {
+    "name": "smallbank",
+    "description" : "This is smallbank benchmark for caliper",
+    "clients": {
+      "type": "local",
+      "number": 2
+    },
+    "rounds": [
+      {
+        "label" : "load",
+        "txNumber" : [200],
+        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 50}}],
+        "arguments": {"txnPerBatch":50},
+        "callback" : "benchmark/smallbank/load.js"
+      },
+      {
+        "label" : "mixed",
+        "txNumber" : [200],
+        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 50}}],
+        "arguments": {"queryRatio": 0.5, "txnPerBatch":10},
+        "callback" : "benchmark/smallbank/mixed.js"
+      }
+    ]
+  },
+  "monitor": {
+    "type": "docker",
+    "docker":{
+      "name": ["all"]
+    },
+    "interval": 1
+  }
+}

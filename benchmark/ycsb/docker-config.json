@@ -1,0 +1,35 @@
+{
+   "blockchain": {
+        "type": "fabric",
+        "config": "benchmark/ycsb/fabric.json"
+  },
+  "command" : {
+    "start": "docker-compose -f network/fabric/simplenetwork/docker-compose.yaml up -d",
+    "end" : "docker-compose -f network/fabric/simplenetwork/docker-compose.yaml down;docker rm $(docker ps -aq)"
+  },
+  "chaincodes": [{"id": "ycsb", "path": "contract/fabric/ycsb", "language":"golang", "version": "v0"}],
+  "test": {
+    "name": "ycsb",
+    "description" : "This is ycsb benchmark for caliper",
+    "clients": {
+      "type": "local",
+      "number": 2
+    },
+    "rounds": [
+      {
+        "label" : "insert",
+        "txNumber" : [1000],
+        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 50}}],
+        "arguments": {"txnPerBatch":10, "fieldCount": 10, "fieldLength": 15, "orderedInserts": 1},
+        "callback" : "benchmark/ycsb/insert.js"
+      }
+    ]
+  },
+  "monitor": {
+    "type": "docker",
+    "docker":{
+      "name": ["all"]
+    },
+    "interval": 1
+  }
+}

@@ -54,7 +54,6 @@
         "deployed": false
       }
     ],
-    "chaincodes": [{"id": "smallbank", "path": "contract/fabric/smallbank", "language":"golang", "version": "v0", "channel": "mychannel"}],
     "endorsement-policy": {
       "identities": [
         {
@@ -77,14 +76,10 @@
         }
       ],
       "policy": { "2-of": [{"signed-by": 0}, {"signed-by": 1}]}
-    },
-    "context": {
-      "load": "mychannel",
-      "mixed": "mychannel"
-    }
-  },
+    }  
+   },
   "info" : {
-    "Version": "1.1.0",
+    "Version": "1.3.0",
     "Size": "4 Peers",
     "Orderer": "Solo",
     "Distribution": "Single Host"

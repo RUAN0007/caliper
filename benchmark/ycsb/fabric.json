@@ -54,7 +54,6 @@
         "deployed": false
       }
     ],
-    "chaincodes": [{"id": "ycsb", "path": "contract/fabric/ycsb", "language":"golang", "version": "v0", "channel": "mychannel"}],
     "endorsement-policy": {
       "identities": [
         {
@@ -77,11 +76,8 @@
         }
       ],
       "policy": { "2-of": [{"signed-by": 0}, {"signed-by": 1}]}
-    },
-    "context": {
-      "insert": "mychannel"
-    }
-  },
+    }  
+   },
   "info" : {
     "Version": "1.3.0",
     "Size": "4 Peers",
