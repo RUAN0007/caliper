@@ -1,0 +1,110 @@
+Application:
+  Organizations: null
+  Policies: &id003
+    Admins:
+      Rule: MAJORITY Admins
+      Type: ImplicitMeta
+    Readers:
+      Rule: ANY Readers
+      Type: ImplicitMeta
+    Writers:
+      Rule: ANY Writers
+      Type: ImplicitMeta
+Capabilities:
+  Application:
+    V1_1: false
+    V1_2: false
+    V1_3: true
+  Global:
+    V1_3: true
+  Orderer:
+    V1_1: true
+Channel:
+  Capabilities: &id004
+    V1_3: true
+  Policies: &id011
+    Admins:
+      Rule: MAJORITY Admins
+      Type: ImplicitMeta
+    Readers:
+      Rule: ANY Readers
+      Type: ImplicitMeta
+    Writers:
+      Rule: ANY Writers
+      Type: ImplicitMeta
+Orderer:
+  Addresses: &id006
+  - slave-30:7050
+  - slave-31:7050
+  BatchSize: &id007
+    AbsoluteMaxBytes: 99 MB
+    MaxMessageCount: 10
+    PreferredMaxBytes: 512 KB
+  BatchTimeout: 2s
+  Kafka: &id008
+    Brokers:
+    - slave-40:9092
+  OrdererType: kafka
+  Organizations: null
+  Policies: &id010
+    Admins:
+      Rule: MAJORITY Admins
+      Type: ImplicitMeta
+    BlockValidation:
+      Rule: ANY Writers
+      Type: ImplicitMeta
+    Readers:
+      Rule: ANY Readers
+      Type: ImplicitMeta
+    Writers:
+      Rule: ANY Writers
+      Type: ImplicitMeta
+Organizations:
+- &id009
+  AdminPrincipal: Role.ADMIN
+  ID: OrdererMSP
+  MSPDir: /users/ruanpc/caliper/network/fabric/cluster/2p/crypto_config/ordererOrganizations/example.com/msp
+  Name: OrdererOrg
+- &id001
+  AnchorPeers:
+  - Host: slave-4
+    Port: 7051
+  ID: Org1MSP
+  MSPDir: /users/ruanpc/caliper/network/fabric/cluster/2p/crypto_config/peerOrganizations/org1.example.com/msp
+  Name: Org1MSP
+- &id002
+  AnchorPeers:
+  - Host: slave-5
+    Port: 7051
+  ID: Org2MSP
+  MSPDir: /users/ruanpc/caliper/network/fabric/cluster/2p/crypto_config/peerOrganizations/org2.example.com/msp
+  Name: Org2MSP
+Profiles:
+  OrgsChannel:
+    Application:
+      Capabilities:
+        V1_1: false
+        V1_2: false
+        V1_3: true
+      Organizations: &id005
+      - *id001
+      - *id002
+      Policies: *id003
+    Consortium: SampleConsortium
+  OrgsOrdererGenesis:
+    Capabilities: *id004
+    Consortiums:
+      SampleConsortium:
+        Organizations: *id005
+    Orderer:
+      Addresses: *id006
+      BatchSize: *id007
+      BatchTimeout: 2s
+      Capabilities:
+        V1_1: true
+      Kafka: *id008
+      OrdererType: kafka
+      Organizations:
+      - *id009
+      Policies: *id010
+    Policies: *id011

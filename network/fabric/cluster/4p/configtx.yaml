@@ -1,0 +1,126 @@
+Application:
+  Organizations: null
+  Policies: &id005
+    Admins:
+      Rule: MAJORITY Admins
+      Type: ImplicitMeta
+    Readers:
+      Rule: ANY Readers
+      Type: ImplicitMeta
+    Writers:
+      Rule: ANY Writers
+      Type: ImplicitMeta
+Capabilities:
+  Application:
+    V1_1: false
+    V1_2: false
+    V1_3: true
+  Global:
+    V1_3: true
+  Orderer:
+    V1_1: true
+Channel:
+  Capabilities: &id006
+    V1_3: true
+  Policies: &id013
+    Admins:
+      Rule: MAJORITY Admins
+      Type: ImplicitMeta
+    Readers:
+      Rule: ANY Readers
+      Type: ImplicitMeta
+    Writers:
+      Rule: ANY Writers
+      Type: ImplicitMeta
+Orderer:
+  Addresses: &id008
+  - slave-30:7050
+  - slave-31:7050
+  BatchSize: &id009
+    AbsoluteMaxBytes: 99 MB
+    MaxMessageCount: 10
+    PreferredMaxBytes: 512 KB
+  BatchTimeout: 2s
+  Kafka: &id010
+    Brokers:
+    - slave-40:9092
+  OrdererType: kafka
+  Organizations: null
+  Policies: &id012
+    Admins:
+      Rule: MAJORITY Admins
+      Type: ImplicitMeta
+    BlockValidation:
+      Rule: ANY Writers
+      Type: ImplicitMeta
+    Readers:
+      Rule: ANY Readers
+      Type: ImplicitMeta
+    Writers:
+      Rule: ANY Writers
+      Type: ImplicitMeta
+Organizations:
+- &id011
+  AdminPrincipal: Role.ADMIN
+  ID: OrdererMSP
+  MSPDir: /users/ruanpc/caliper/network/fabric/cluster/4p/crypto_config/ordererOrganizations/example.com/msp
+  Name: OrdererOrg
+- &id001
+  AnchorPeers:
+  - Host: slave-4
+    Port: 7051
+  ID: Org1MSP
+  MSPDir: /users/ruanpc/caliper/network/fabric/cluster/4p/crypto_config/peerOrganizations/org1.example.com/msp
+  Name: Org1MSP
+- &id002
+  AnchorPeers:
+  - Host: slave-5
+    Port: 7051
+  ID: Org2MSP
+  MSPDir: /users/ruanpc/caliper/network/fabric/cluster/4p/crypto_config/peerOrganizations/org2.example.com/msp
+  Name: Org2MSP
+- &id003
+  AnchorPeers:
+  - Host: slave-6
+    Port: 7051
+  ID: Org3MSP
+  MSPDir: /users/ruanpc/caliper/network/fabric/cluster/4p/crypto_config/peerOrganizations/org3.example.com/msp
+  Name: Org3MSP
+- &id004
+  AnchorPeers:
+  - Host: slave-7
+    Port: 7051
+  ID: Org4MSP
+  MSPDir: /users/ruanpc/caliper/network/fabric/cluster/4p/crypto_config/peerOrganizations/org4.example.com/msp
+  Name: Org4MSP
+Profiles:
+  OrgsChannel:
+    Application:
+      Capabilities:
+        V1_1: false
+        V1_2: false
+        V1_3: true
+      Organizations: &id007
+      - *id001
+      - *id002
+      - *id003
+      - *id004
+      Policies: *id005
+    Consortium: SampleConsortium
+  OrgsOrdererGenesis:
+    Capabilities: *id006
+    Consortiums:
+      SampleConsortium:
+        Organizations: *id007
+    Orderer:
+      Addresses: *id008
+      BatchSize: *id009
+      BatchTimeout: 2s
+      Capabilities:
+        V1_1: true
+      Kafka: *id010
+      OrdererType: kafka
+      Organizations:
+      - *id011
+      Policies: *id012
+    Policies: *id013

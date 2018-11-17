@@ -1,0 +1,66 @@
+{
+  "fabric": {
+    "cryptodir": "network/fabric/1P2Org2Order4KFK/crypto-config",
+    "network": {
+      "orderers": [{
+          "url": "grpc://slave-30:7050",
+          "mspid": "OrdererMSP",
+          "user": {
+            "key": "network/fabric/1P2Org2Order4KFK/crypto-config/ordererOrganizations/example.com/users/Admin@example.com/msp/keystore/fba887c0179abc5ce832a9b69a76242004200d13e9f40acc7287eff080623044_sk",
+            "cert": "network/fabric/1P2Org2Order4KFK/crypto-config/ordererOrganizations/example.com/users/Admin@example.com/msp/signcerts/Admin@example.com-cert.pem"
+          },
+          "server-hostname": "orderer0.example.com",
+          "tls_cacerts": "network/fabric/1P2Org2Order4KFK/crypto-config/ordererOrganizations/example.com/users/Admin@example.com/tls/ca.crt"
+        },
+        {
+          "url": "grpc://slave-31:7050",
+          "mspid": "OrdererMSP",
+          "user": {
+            "key": "network/fabric/1P2Org2Order4KFK/crypto-config/ordererOrganizations/example.com/users/Admin@example.com/msp/keystore/fba887c0179abc5ce832a9b69a76242004200d13e9f40acc7287eff080623044_sk",
+            "cert": "network/fabric/1P2Org2Order4KFK/crypto-config/ordererOrganizations/example.com/users/Admin@example.com/msp/signcerts/Admin@example.com-cert.pem"
+          },
+          "server-hostname": "orderer1.example.com",
+          "tls_cacerts": "network/fabric/1P2Org2Order4KFK/crypto-config/ordererOrganizations/example.com/users/Admin@example.com/tls/ca.crt"
+        }
+      ],
+      "org1": {
+        "name": "peerOrg1",
+        "mspid": "Org1MSP",
+        "user": {
+          "key": "network/fabric/1P2Org2Order4KFK/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/814559db09415dad9272274088a9c1384ea07b2d8cd22b002415e2201738f7a7_sk",
+          "cert": "network/fabric/1P2Org2Order4KFK/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem"
+        },
+        "peer0": {
+          "requests": "grpc://slave-4:7051",
+          "server-hostname": "peer0.org1.example.com",
+          "tls_cacerts": "network/fabric/1P2Org2Order4KFK/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt"
+        }
+      }
+    },
+    "channel": [
+      {
+        "name": "mychannel",
+        "config": "network/fabric/1P2Org2Order4KFK/channel-artifacts/channel.tx",
+        "organizations": ["org1"],
+        "deployed": false
+      }
+    ],
+    "endorsement-policy": {
+      "identities": [
+        {
+          "role": {
+            "name": "member",
+            "mspId": "Org1MSP"
+          }
+        }     
+      ],
+      "policy": { "1-of": [{"signed-by": 0}]}
+    }
+  },
+  "info" : {
+    "Version": "1.3.0",
+    "Size": "Multi Peers",
+    "Orderer": "kafka",
+    "Distribution": "Single Host"
+  }
+}
