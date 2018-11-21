@@ -125,15 +125,6 @@ class Fabric extends BlockchainInterface{
      * @return {Promise<object>} The promise for the result of the execution.
      */
     invokeSmartContract(context, contractID, contractVer, args, timeout) {
-    /* Optional TODO: Replace TxnListener with BlockListener for Txn Commit
-    
-    Currently, e2eUtils.invokebycontext utilizes TxnListener to detech for the block commit
-    If txns are overloaded, TxnListener may not behave properly. 
-    
-    In Future, e2eUtils.invokebycontext is configured to only return the promise for ordering result. 
-    Once all txns in the batch are submitted for ordering, register a block listener and return promises
-    Return the promise which is resolved when all transations are detected in the new blocks.
-    */
         let promises = [];
         args.forEach((item, index)=>{
             try {

@@ -1,5 +1,4 @@
 {
     "broker_urls": "slave-43:9092,slave-42:9092,slave-41:9092,slave-40:9092",
-    "zk_url": "slave-40:2181",
-    "topic": "client-b"
+    "topic": "block-channel"
  }

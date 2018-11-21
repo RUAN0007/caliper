@@ -55,7 +55,7 @@ function unRegisterNewBlock() {
 }
 module.exports.unRegisterNewBlock = unRegisterNewBlock;
 
-function registerNewBlock(kfk_producer, topic) {
+function registerNewBlock(kfk_producer, topic, partition_count) {
     Client.setConfigSetting('request-timeout', 120000);
 
     let channel = testUtil.getDefaultChannel();
@@ -119,7 +119,7 @@ function registerNewBlock(kfk_producer, topic) {
         let eh = channel.getChannelEventHubsForOrg()[0];
         blk_registration = eh.registerBlockEvent((block) => {
             var event_data = {};
-            event_data.validTime = new Date().getTime() / 1000;
+            event_data.validTime = Date.now();
             event_data.block = block;
 
             // commUtils.log("Received Block No", block.header.number, "at", event_data.validTime);
@@ -392,23 +392,6 @@ function instantiateChaincode(chaincode, endorsement_policy, upgrade){
             }
         }
 
-        // an event listener can only register with a peer in its own org
-        // let data = fs.readFileSync(commUtils.resolvePath(ORGS[userOrg][eventPeer].tls_cacerts));
-        // let eh = client.newEventHub();
-        // eh.setPeerAddr(
-        //     ORGS[userOrg][eventPeer].events,
-        //     {
-        //         pem: Buffer.from(data).toString(),
-        //         'ssl-target-name-override': ORGS[userOrg][eventPeer]['server-hostname']
-        //     }
-        // );
-        // eh.connect();
-        // eventhubs.push(eh);
-
-        // read the config block from the orderer for the channel
-        // and initialize the verify MSPs based on the participating
-        // organizations
-        return channel.initialize();
     }, (err) => {
         throw new Error('Failed to enroll user \'admin\'. ' + err);
 

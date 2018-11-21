@@ -387,20 +387,12 @@ module.exports.run = function(configFile, networkFile) {
         }).then( () => {
             let broker_urls = kafka_config.broker_urls;
             let topic = kafka_config.topic;
+            let partition_count = kafka_config.partition_count;
             // console.log("Creating the kafka client...");
             // kfk_client = new kafka.Client(zk_url, topic, { sessionTimeout: 30000, 
             //                                                spinDelay: 100, retries: 2 });
             kfk_client = new kafka.KafkaClient({kafkaHost: broker_urls});
 
-        //     return new Promise((resolve, reject) => {
-        //         kfk_client.on('ready', function () {
-        //             resolve();
-        //         });
-        //         kfk_client.on('error', function (err) {
-        //             reject(err);
-        //         });
-        //     });
-        // }).then( () => {
             return new Promise((resolve, reject) => {
                 // console.log("Creating the kafka producer..");
                 kfk_producer = new Producer(kfk_client, { requireAcks: -1 })
@@ -408,9 +400,17 @@ module.exports.run = function(configFile, networkFile) {
                 kfk_producer.on('error', function (err) {
                         reject(err);
                 });
+
+                var topicsToCreate = [{
+                        topic: topic,
+                        partitions: partition_count,
+                        replicationFactor: 1
+                    }
+                ];
+
                 kfk_producer.on('ready', function () {
                     // console.log("Creating the kafka topic..");
-                    kfk_producer.createTopics([topic], false, function (err, data) {
+                    kfk_producer.createTopics(topic, false, function (err, data) {
                         if (err) {
                             reject(err);
                         } else {
