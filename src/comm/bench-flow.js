@@ -21,6 +21,10 @@ const Blockchain = require('./blockchain.js');
 // const Monitor = require('./monitor.js');
 //const Report  = require('./report.js');
 const Client  = require('./client/client.js');
+const kafka = require('kafka-node');
+
+var Producer = kafka.Producer;
+
 const Util = require('./util.js');
 const log = Util.log;
 let blockchain, monitor, report, client;
@@ -29,7 +33,10 @@ let round = 0;              // test round
 let demo = require('../gui/src/demo.js');
 let absConfigFile, absNetworkFile;
 let absCaliperDir = path.join(__dirname, '..', '..');
-
+let absKfkConfigFile = path.join(absCaliperDir, 'network', 'kafka', 'kafka-config.json');
+let kafka_config = require(absKfkConfigFile);
+let kfk_client;
+let kfk_producer;
 /**
  * Generate mustache template for test report
  */
@@ -286,7 +293,8 @@ function defaultTest(args, clientArgs, final) {
                 trim: args.trim ? args.trim : 0,
                 args: args.arguments,
                 cb  : args.callback,
-                config: configPath
+                config: configPath,
+                kfk_config: kafka_config
             };
             // condition for time based or number based test driving
             if (args.txNumber) {
@@ -348,7 +356,7 @@ module.exports.run = function(configFile, networkFile) {
         global.tapeObj = t;
         absConfigFile  = Util.resolvePath(configFile);
         absNetworkFile = Util.resolvePath(networkFile);
-        blockchain = new Blockchain(absNetworkFile);
+        blockchain = new Blockchain(absNetworkFile, kafka_config);
         //monitor = new Monitor(absConfigFile);
         client  = new Client(absConfigFile);
         //createReport();
@@ -370,14 +378,51 @@ module.exports.run = function(configFile, networkFile) {
                 resolve();
             }
         });
-        if (!config.hasOwnProperty('chaincodes')) {
-          reject(new Error("No chaincodes config in client config file."));
+        if (!config.hasOwnProperty('contracts')) {
+          reject(new Error("No smart contract config in client config file."));
         } 
-        let chaincodes_config = config.chaincodes;
+        let contracts_config = config.contracts;
         startPromise.then(() => {
             return blockchain.init();
         }).then( () => {
-            return blockchain.installSmartContract(chaincodes_config);
+            let broker_urls = kafka_config.broker_urls;
+            let topic = kafka_config.topic;
+            // console.log("Creating the kafka client...");
+            // kfk_client = new kafka.Client(zk_url, topic, { sessionTimeout: 30000, 
+            //                                                spinDelay: 100, retries: 2 });
+            kfk_client = new kafka.KafkaClient({kafkaHost: broker_urls});
+
+        //     return new Promise((resolve, reject) => {
+        //         kfk_client.on('ready', function () {
+        //             resolve();
+        //         });
+        //         kfk_client.on('error', function (err) {
+        //             reject(err);
+        //         });
+        //     });
+        // }).then( () => {
+            return new Promise((resolve, reject) => {
+                // console.log("Creating the kafka producer..");
+                kfk_producer = new Producer(kfk_client, { requireAcks: -1 })
+                // let topic = kafka_config.topic;
+                kfk_producer.on('error', function (err) {
+                        reject(err);
+                });
+                kfk_producer.on('ready', function () {
+                    // console.log("Creating the kafka topic..");
+                    kfk_producer.createTopics([topic], false, function (err, data) {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve();
+                        }
+                    })
+                });
+            });
+        }).then( () => {
+            return blockchain.registerNewBlock(kfk_producer)
+        }).then( () => {
+            return blockchain.installSmartContract(contracts_config);
         }).then( () => {
             return client.init().then((number)=>{
                 return blockchain.prepareClients(number);
@@ -413,6 +458,9 @@ module.exports.run = function(configFile, networkFile) {
              return Promise.resolve();
         }).then( () => {
             client.stop();
+            blockchain.unRegisterNewBlock();
+            log("Close the kafka client. ");
+            kfk_client.close();
             if (config.hasOwnProperty('command') && config.command.hasOwnProperty('end')){
                 log(config.command.end);
                 let end = exec(config.command.end, {cwd: absCaliperDir});

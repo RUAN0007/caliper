@@ -38,6 +38,7 @@
     "request": "^2.81.0",
     "request-promise": "^4.2.1",
     "systeminformation": "^3.23.7",
+    "kafka-node": "^2.3.0",
     "table": "^4.0.1",
     "tape": "^4.8.0",
     "tape-promise": "^1.1.0"

@@ -46,6 +46,21 @@ class Fabric extends BlockchainInterface{
             });
     }
 
+    unRegisterNewBlock() {
+        return e2eUtils.unRegisterNewBlock();
+    }
+
+    registerNewBlock(kfk_producer, topic) {
+        const t = global.tapeObj;
+        t.comment('Listen for block events......');
+        kfk_producer.on('error', function (err) {
+            commUtils.log('Kafka Producer is not ready before block registration.' + (err.stack ? err.stack : err));
+            return Promise.reject(err);
+        });
+
+        return e2eUtils.registerNewBlock(kfk_producer, topic);
+    }
+
     /**
      * Deploy the chaincode specified in the network configuration file to all peers.
      * @return {Promise} The return promise.

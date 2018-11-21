@@ -6,7 +6,7 @@
     "start": "sleep 5",
     "end" : "sleep 5"
   },
-  "chaincodes": [{"id": "ycsb", "path": "contract/fabric/ycsb", "language":"golang", "version": "v0"}],
+  "contracts": [{"id": "ycsb", "path": "contract/fabric/ycsb", "language":"golang", "version": "v0"}],
   "test": {
     "name": "ycsb",
     "description" : "This is ycsb benchmark for caliper",
@@ -17,9 +17,9 @@
     "rounds": [
       {
         "label" : "insert",
-        "txNumber" : [10000],
-        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 200}}],
-        "arguments": {"txnPerBatch":50, "fieldCount": 10, "fieldLength": 15, "orderedInserts": 1},
+        "txNumber" : [1000],
+        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 50}}],
+        "arguments": {"txnPerBatch":10, "fieldCount": 10, "fieldLength": 15, "orderedInserts": 1},
         "callback" : "benchmark/ycsb/insert.js"
       }
     ]

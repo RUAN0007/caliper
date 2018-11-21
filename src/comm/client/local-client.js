@@ -273,7 +273,7 @@ async function runDuration(msg, cb, context) {
 function doTest(msg) {
     log('doTest() with:', msg);
     let cb = require(Util.resolvePath(msg.cb));
-    blockchain = new bc(Util.resolvePath(msg.config));
+    blockchain = new bc(Util.resolvePath(msg.config), msg.kfk_config);
 
     beforeTest(msg);
     // start an interval to report results repeatedly

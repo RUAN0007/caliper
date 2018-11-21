@@ -15,9 +15,9 @@ class Blockchain {
      * Constructor
      * @param {String} configPath path of the blockchain configuration file
      */
-    constructor(configPath) {
+    constructor(configPath, kfk_config) {
         let config = require(configPath);
-
+        this.kfk_config = kfk_config;
         if(config.hasOwnProperty('fabric')) {
             let fabric = require('../fabric/fabric.js');
             this.bcType = 'fabric';
@@ -69,12 +69,22 @@ class Blockchain {
         return this.bcObj.prepareClients(number);
     }
 
+    unRegisterNewBlock() {
+        return this.bcObj.unRegisterNewBlock()
+    }
+
+    // Register an event handler to submit every new block to kafka
+    registerNewBlock(kfk_producer) {
+        let topic = this.kfk_config.topic;
+        return this.bcObj.registerNewBlock(kfk_producer, topic);
+    }
+
     /**
     * Install smart contract(s), detail informations are defined in the blockchain configuration file
     * @return {Promise} promise object
     */
-    installSmartContract(chaincodes_config) {
-        return this.bcObj.installSmartContract(chaincodes_config);
+    installSmartContract(contracts_config) {
+        return this.bcObj.installSmartContract(contracts_config);
     }
 
     /**
@@ -124,7 +134,19 @@ class Blockchain {
             time = timeout;
         }
 
-        return this.bcObj.invokeSmartContract(context, contractID, contractVer, arg, time);
+        return this.bcObj.invokeSmartContract(context, contractID, contractVer, arg, time).then((tx_statuses)=> {
+            return this.getConfirmation(tx_statuses);
+        });
+    }
+
+    getConfirmation(tx_statuses) {
+        // Create a kafka consumer
+        // Create a promise. 
+        // In the promise, register for new block
+        //   When a block comes, delegate bcObj to check for the existence of txn
+        //   Resolve when all txns have been included
+        // DON't FORGET to set a time out. 
+        return tx_statuses;
     }
 
     /**

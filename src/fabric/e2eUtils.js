@@ -35,6 +35,9 @@ let ORGS;
 let tx_id = null;
 let the_user = null;
 
+let blk_event_hub;
+let blk_registration;
+
 /**
  * Initialize the Fabric client configuration.
  * @param {string} config_path The path of the Fabric network configuration file.
@@ -44,6 +47,117 @@ function init(config_path) {
     ORGS = Client.getConfigSetting('fabric').network;
 }
 module.exports.init = init;
+
+function unRegisterNewBlock() {
+    commUtils.log("Unregister the block event for Fabric. ");
+    blk_event_hub.unregisterBlockEvent(blk_registration, true);
+    blk_event_hub.disconnect();
+}
+module.exports.unRegisterNewBlock = unRegisterNewBlock;
+
+function registerNewBlock(kfk_producer, topic) {
+    Client.setConfigSetting('request-timeout', 120000);
+
+    let channel = testUtil.getDefaultChannel();
+    if(channel === null) {
+        return Promise.reject(new Error('could not find channel in config'));
+    }
+    const channel_name = channel.name;
+    const userOrg = channel.organizations[0];
+
+    const client = new Client();
+    channel = client.newChannel(channel_name);
+
+    const orgName = ORGS[userOrg].name;
+    const cryptoSuite = Client.newCryptoSuite();
+    cryptoSuite.setCryptoKeyStore(Client.newCryptoKeyStore({path: testUtil.storePathForOrg(orgName)}));
+    client.setCryptoSuite(cryptoSuite);
+
+    const caRootsPath = ORGS.orderers[0].tls_cacerts;
+    let data = fs.readFileSync(commUtils.resolvePath(caRootsPath));
+    let caroots = Buffer.from(data).toString();
+
+    channel.addOrderer(
+        client.newOrderer(
+            ORGS.orderers[0].url,
+            {
+                'pem': caroots,
+                'ssl-target-name-override': ORGS.orderers[0]['server-hostname']
+            }
+        )
+    );
+
+    return Client.newDefaultKeyValueStore({
+        path: testUtil.storePathForOrg(orgName)
+    }).then((store) => {
+        client.setStateStore(store);
+        return testUtil.getSubmitter(client, true /* use peer org admin*/, userOrg);
+    }).then((admin) => {
+        the_user = admin;
+
+        for(let org in ORGS) {
+            if(ORGS.hasOwnProperty(org) && org.indexOf('org') === 0) {
+                for (let key in ORGS[org]) {
+                    if(ORGS[org].hasOwnProperty(key) && key.indexOf('peer') === 0) {
+                        let data = fs.readFileSync(commUtils.resolvePath(ORGS[org][key].tls_cacerts));
+                        let peer = client.newPeer(
+                            ORGS[org][key].requests,
+                            {
+                                pem: Buffer.from(data).toString(),
+                                'ssl-target-name-override': ORGS[org][key]['server-hostname']
+                            });
+                        channel.addPeer(peer);
+                    }
+                }
+            }
+        }
+
+        return channel.initialize();
+    }, (err) => {
+        throw new Error('Failed to enroll user \'admin\'. ' + err);
+    }).then(() => {
+        let eh = channel.getChannelEventHubsForOrg()[0];
+        blk_registration = eh.registerBlockEvent((block) => {
+            var event_data = {};
+            event_data.validTime = new Date().getTime() / 1000;
+            event_data.block = block;
+
+            // commUtils.log("Received Block No", block.header.number, "at", event_data.validTime);
+
+            var payload = [{
+                topic: topic,
+                messages: JSON.stringify(event_data),
+                partition: 0,
+                attributes: 1
+            }];
+
+            kfk_producer.send(payload, function (error, result) {
+                if (error) {
+                    commUtils.log("Error while publishing block in kafka");
+                    return Promise.reject(error);
+                } else {
+                    // commUtils.log("Successfully push the block to kafka brokers");
+                }
+            });
+
+        }, (err) => {
+            commUtils.log("Fail to register block event");
+            Promise.reject(err);
+        },
+            {unregister: false, disconnect: false}
+        );
+        eh.connect(true);
+        blk_event_hub = eh;
+        Promise.resolve();
+    }).then(()=>{
+        return Promise.resolve();
+    }).catch((err) => {
+        return Promise.reject(err);
+    });    
+}
+
+module.exports.registerNewBlock = registerNewBlock;
+
 
 /**
  * Deploy the given chaincode to the given organization's peers.
