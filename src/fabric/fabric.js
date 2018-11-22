@@ -51,8 +51,8 @@ class Fabric extends BlockchainInterface{
     }
 
     registerNewBlock(kfk_producer, topic) {
-        const t = global.tapeObj;
-        t.comment('Listen for block events......');
+        util.init(this.configPath);
+        e2eUtils.init(this.configPath);
         kfk_producer.on('error', function (err) {
             commUtils.log('Kafka Producer is not ready before block registration.' + (err.stack ? err.stack : err));
             return Promise.reject(err);
@@ -113,6 +113,22 @@ class Fabric extends BlockchainInterface{
         return e2eUtils.releasecontext(context).then(() => {
             return commUtils.sleep(1000);
         });
+    }
+
+    getBlockInfo(blk_data) {
+        let block_info = {};
+        block_info["valid_txnIds"] = [];
+        block_info["invalid_txnIds"] = [];
+        block_info["timestamp"] = JSON.parse(blk_data).validTime;
+
+        var block = JSON.parse(blk_data).block;
+
+        for (var index = 0; index < block.data.data.length; index++) {
+            var channel_header = block.data.data[index].payload.header.channel_header;
+            block_info.valid_txnIds.push(channel_header.tx_id);
+        }
+
+        return block_info;
     }
 
     /**

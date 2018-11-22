@@ -93,6 +93,11 @@ class BlockchainInterface {
         throw new Error('queryState is not implemented for this blockchain system');
     }
 
+    getBlockInfo(blk_data) {
+        throw new Error('blk_data is not implemented for this blockchain system');
+    }
+
+
     /**
      * Get adapter specific transaction statistics
      * @param {JSON} stats txStatistics object

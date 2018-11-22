@@ -137,104 +137,103 @@ class Blockchain {
         }
 
         return this.bcObj.invokeSmartContract(context, contractID, contractVer, arg, time).then((tx_statuses)=> {
-            return this.getConfirmation(tx_statuses);
-        });
-    }
 
-    getConfirmation(tx_statuses) {
-        // Create a kafka consumer
-        // Create a promise. 
-        // In the promise, register for new block
-        //   When a block comes, delegate bcObj to check for the existence of txn
-        //   Resolve when all txns have been included
-        // DON't FORGET to set a time out. 
-        return new Promise((resolve, reject) => {
-            // Create a map to associate each txnID to its status
-            //   These txns will be checked with the blocks
-            let txn_map = {};
-            tx_statuses.forEach(txn => {
-                txn_map[txn.getID()] = txn;
-            });
-
-            // an array of txn which have been detected in the block.
-            let finished_tx_statuses = [];  
-
-            var kafka = require('kafka-node');
-            var Consumer = kafka.Consumer;
-
-            var kfk_client = new kafka.KafkaClient({ kafkaHost: this.kfk_config.broker_urls, requestTimeout: 300000000 });
-            var options = {
-                autoCommit: true,
-                fetchMaxWaitMs: 1000,
-                fetchMaxBytes: 4096 * 4096,
-                encoding: 'buffer',
-                //requestTimeout:300000
-                // Kafka consumers on each client process are in the different consumer groups
-                //   So that each block (kafka msg) will be directed to each consumer. 
-                groupId: "client_group_" + process.pid
-            };
-
-            var topics = [{
-                topic: this.kfk_config.topic
-            }];
-            
-            var kfk_consumer = new Consumer(kfk_client, topics, options);
-
-            let resolve_timeout = setTimeout(() => {
-            // Treat all undectected txns as failed. 
-                Object.keys(txn_map).forEach(function(txn_id) {
-                    txn_map[txn_id].SetStatusFail();
-                    finished_tx_statuses.append(txn_map[txn_id]);
-                });
-                kfk_consumer.close();
-
-                resolve(finished_tx_statuses);
-            }, // 20s to time out
-            20 * 1000);
-            
-            kfk_consumer.on('message', function (message) {
-                var buf = new Buffer(message.value);
-                var blk_data = buf.toString('utf-8');
-
-                // var block = JSON.parse(data).block;
-                // var blk_num = block.header.number;
-                // var txn_count = block.data.data.length;
-                // console.log("Receive Block " + blk_num + " with " + txn_count + " transactions in Client " + process.pid);
-
-                let block_info = this.bcObj.GetBlockInfo(blk_data);
-                let blk_time = block_info.timestamp;
-                let valid_txnIds = block_info.valid_txnIds;
-                let invalid_txnIds = block_info.invalid_txnIds;
-
-                valid_txnIds.forEach(txn_id => {
-                    if (txn_map.hasOwnProperty(txn_id)) {
-                        txn_map[txn_id].SetStatusSuccess();
-                        txn_map[txn_id].Set('time_commit', blk_time);
-
-                        finished_tx_statuses.append(txn_map[txn_id]);
-                        delete txn_map[txn_id];
+            // Create a kafka consumer
+            // Create a promise. 
+            // In the promise, register for new block
+            //   When a block comes, delegate bcObj to check for the existence of txn
+            //   Resolve when all txns have been included
+            // DON't FORGET to set a time out. 
+            return new Promise((resolve, reject) => {
+                // Create a map to associate each txnID to its status
+                //   These txns will be checked with the blocks
+                let bcObj = this.bcObj;
+                let txn_map = {};
+                let finished_tx_statuses = [];  
+                tx_statuses.forEach(txn => {
+                    if (txn.IsStatusFailed() || txn.IsVerified()) {
+                        finished_tx_statuses.push(txn);
+                    } else {
+                        txn_map[txn.GetID()] = txn;
                     }
                 });
 
-                invalid_txnIds.forEach(txn_id => {
-                    if (txn_map.hasOwnProperty(txn_id)) {
-                        txn_map[txn_id].SetStatusFail();
-                        finished_tx_statuses.append(txn_map[txn_id]);
-                        delete txn_map[txn_id];
-                    }
-                });
+                // an array of txn which have been detected in the block.
+
+                var kafka = require('kafka-node');
+                var Consumer = kafka.Consumer;
+
+                var kfk_client = new kafka.KafkaClient({ kafkaHost: this.kfk_config.broker_urls, requestTimeout: 300000000 });
+                var options = {
+                    autoCommit: true,
+                    fetchMaxWaitMs: 1000,
+                    fetchMaxBytes: 4096 * 4096,
+                    encoding: 'buffer',
+                    //requestTimeout:300000
+                    // Kafka consumers on each client process are in the different consumer groups
+                    //   So that each block (kafka msg) will be directed to each consumer. 
+                    groupId: "client_group_" + process.pid
+                };
+
+                var topics = [{
+                    topic: this.kfk_config.topic
+                }];
                 
-                // All issued txns have been detected
-                if (finished_tx_statuses.length === tx_statuses.length) {
-                    clearTimeout(resolve_timeout);
+                var kfk_consumer = new Consumer(kfk_client, topics, options);
+
+                let resolve_timeout = setTimeout(() => {
+                    // Treat all undetected txns as failed. 
+                    Object.keys(txn_map).forEach(function(txn_id) {
+                        if (!txn_map[txn_id].IsVerified()) {
+                            txn_map[txn_id].SetStatusFail();
+                            finished_tx_statuses.push(txn_map[txn_id]);
+                            console.log('Time out txn [' + txn_id.substring(0, 5) + '...]:');
+                        }
+                    });
                     kfk_consumer.close();
                     resolve(finished_tx_statuses);
-                }
-            });
+                }, // 20s to time out
+                20 * 1000);
+                
+                kfk_consumer.on('message', function (message) {
+                    var buf = new Buffer(message.value);
+                    var blk_data = buf.toString('utf-8');
 
-            kfk_consumer.on('error', function (error) {
-                console.log("Error from consumers.", error);
-                reject(error);
+                    let block_info = bcObj.getBlockInfo(blk_data);
+                    let blk_time = block_info.timestamp;
+                    let valid_txnIds = block_info.valid_txnIds;
+                    let invalid_txnIds = block_info.invalid_txnIds;
+
+                    valid_txnIds.forEach(txn_id => {
+                        if (txn_map.hasOwnProperty(txn_id)) {
+                            txn_map[txn_id].SetStatusSuccess();
+                            txn_map[txn_id].SetVerification(true);
+                            txn_map[txn_id].Set('time_commit', blk_time);
+
+                            finished_tx_statuses.push(txn_map[txn_id]);
+                        }
+                    });
+
+                    invalid_txnIds.forEach(txn_id => {
+                        if (txn_map.hasOwnProperty(txn_id)) {
+                            txn_map[txn_id].SetStatusFail();
+                            txn_map[txn_id].SetVerification(true);
+                            finished_tx_statuses.push(txn_map[txn_id]);
+                        }
+                    });
+                    
+                    // All issued txns have been detected
+                    if (finished_tx_statuses.length === tx_statuses.length) {
+                        clearTimeout(resolve_timeout);
+                        kfk_consumer.close();
+                        resolve(finished_tx_statuses);
+                    }
+                });
+
+                kfk_consumer.on('error', function (error) {
+                    console.log("Error from consumers.", error);
+                    reject(error);
+                });
             });
         });
     }

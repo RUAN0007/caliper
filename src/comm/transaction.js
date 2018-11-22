@@ -101,6 +101,10 @@ class TxStatus {
         this.status.time_final = Date.now();
     }
 
+    IsStatusFailed() {
+        return this.status.status === 'failed';
+    }
+
     /**
      * Check if the tx's status is verified
      * @return {boolean}, verified or not

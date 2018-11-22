@@ -21,10 +21,6 @@ const Blockchain = require('./blockchain.js');
 // const Monitor = require('./monitor.js');
 //const Report  = require('./report.js');
 const Client  = require('./client/client.js');
-const kafka = require('kafka-node');
-
-var Producer = kafka.Producer;
-
 const Util = require('./util.js');
 const log = Util.log;
 let blockchain, monitor, report, client;
@@ -33,10 +29,13 @@ let round = 0;              // test round
 let demo = require('../gui/src/demo.js');
 let absConfigFile, absNetworkFile;
 let absCaliperDir = path.join(__dirname, '..', '..');
-let absKfkConfigFile = path.join(absCaliperDir, 'network', 'kafka', 'kafka-config.json');
-let kafka_config = require(absKfkConfigFile);
-let kfk_client;
-let kfk_producer;
+
+let kafka_process;
+let kafka_config;
+
+
+
+
 /**
  * Generate mustache template for test report
  */
@@ -356,6 +355,7 @@ module.exports.run = function(configFile, networkFile) {
         global.tapeObj = t;
         absConfigFile  = Util.resolvePath(configFile);
         absNetworkFile = Util.resolvePath(networkFile);
+
         blockchain = new Blockchain(absNetworkFile, kafka_config);
         //monitor = new Monitor(absConfigFile);
         client  = new Client(absConfigFile);
@@ -385,42 +385,23 @@ module.exports.run = function(configFile, networkFile) {
         startPromise.then(() => {
             return blockchain.init();
         }).then( () => {
-            let broker_urls = kafka_config.broker_urls;
-            let topic = kafka_config.topic;
-            let partition_count = kafka_config.partition_count;
-            // console.log("Creating the kafka client...");
-            // kfk_client = new kafka.Client(zk_url, topic, { sessionTimeout: 30000, 
-            //                                                spinDelay: 100, retries: 2 });
-            kfk_client = new kafka.KafkaClient({kafkaHost: broker_urls});
+            // Launch a separate process to submit blocks to kafka
+            let absKfkConfigFile = path.join(absCaliperDir, 'network', 'kafka', 'kafka-config.json');
+            kafka_config = require(absKfkConfigFile);
+            
+            let kafka_msg = {kfk_config: kafka_config, absNetworkFile: absNetworkFile};
+            let blockListenerPath = path.join(absCaliperDir, 'src', 'comm', 'block-listener.js');
+            kafka_process = childProcess.fork(blockListenerPath);
 
-            return new Promise((resolve, reject) => {
-                // console.log("Creating the kafka producer..");
-                kfk_producer = new Producer(kfk_client, { requireAcks: -1 })
-                // let topic = kafka_config.topic;
-                kfk_producer.on('error', function (err) {
-                        reject(err);
-                });
-
-                var topicsToCreate = [{
-                        topic: topic,
-                        partitions: partition_count,
-                        replicationFactor: 1
-                    }
-                ];
-
-                kfk_producer.on('ready', function () {
-                    // console.log("Creating the kafka topic..");
-                    kfk_producer.createTopics(topic, false, function (err, data) {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve();
-                        }
-                    })
-                });
+            kafka_process.on('error', function () {
+                console.log("Kafka process encountered an error. ");
             });
-        }).then( () => {
-            return blockchain.registerNewBlock(kfk_producer)
+
+            kafka_process.on('exit', function () {
+                console.log("Kafka process exits normally. ");
+            });
+            t.comment("Launch the kafka child process"); 
+            kafka_process.send(kafka_msg);
         }).then( () => {
             return blockchain.installSmartContract(contracts_config);
         }).then( () => {
@@ -457,10 +438,8 @@ module.exports.run = function(configFile, networkFile) {
              demo.stopWatch("");
              return Promise.resolve();
         }).then( () => {
+            kafka_process.kill('SIGINT');
             client.stop();
-            blockchain.unRegisterNewBlock();
-            log("Close the kafka client. ");
-            kfk_client.close();
             if (config.hasOwnProperty('command') && config.command.hasOwnProperty('end')){
                 log(config.command.end);
                 let end = exec(config.command.end, {cwd: absCaliperDir});
@@ -468,6 +447,8 @@ module.exports.run = function(configFile, networkFile) {
                 end.stderr.pipe(process.stderr);
             }
             t.end();
+            process.exit();
+        // }).then( () => {
         }).catch( (err) => {
             demo.stopWatch();
             log('unexpected error, ' + (err.stack ? err.stack : err));
@@ -479,6 +460,7 @@ module.exports.run = function(configFile, networkFile) {
                 end.stderr.pipe(process.stderr);
             }
             t.end();
+            process.exit();
         });
     });
 };

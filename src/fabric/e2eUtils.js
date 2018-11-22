@@ -753,46 +753,46 @@ async function invokebycontext(context, id, version, args, timeout){
             proposal: proposal,
         };
 
-        let newTimeout = timeout * 1000 - (Date.now() - startTime);
-        if(newTimeout < 10000) {
-            commUtils.log('WARNING: timeout is too small, default value is used instead');
-            newTimeout = 10000;
-        }
+        // let newTimeout = timeout * 1000 - (Date.now() - startTime);
+        // if(newTimeout < 10000) {
+        //     commUtils.log('WARNING: timeout is too small, default value is used instead');
+        //     newTimeout = 10000;
+        // }
 
-        const eventPromises = [];
-        eventHubs.forEach((eh) => {
-            eventPromises.push(new Promise((resolve, reject) => {
-                let handle = setTimeout(reject, newTimeout, new Error("Time out"));
+        // const eventPromises = [];
+        // eventHubs.forEach((eh) => {
+        //     eventPromises.push(new Promise((resolve, reject) => {
+        //         let handle = setTimeout(reject, newTimeout, new Error("Time out"));
 
-                eh.registerTxEvent(txId,
-                    (tx, code) => {
-                        clearTimeout(handle);
-                        eh.unregisterTxEvent(txId);
+        //         eh.registerTxEvent(txId,
+        //             (tx, code) => {
+        //                 clearTimeout(handle);
+        //                 eh.unregisterTxEvent(txId);
 
-                        // either explicit invalid event or valid event, verified in both cases by at least one peer
-                        invokeStatus.SetVerification(true);
-                        if (code !== 'VALID') {
-                            let err = new Error('Invalid transaction: ' + code);
-                            errFlag |= TxErrorEnum.BadEventNotificationError;
-                            invokeStatus.SetFlag(errFlag);
-                            invokeStatus.SetErrMsg(TxErrorIndex.BadEventNotificationError, err.toString());
-                            reject(err); // handle error in final catch
-                        } else {
-                            resolve();
-                        }
-                    },
-                    (err) => {
-                        clearTimeout(handle);
-                        // we don't know what happened, but give the other eventhub connections a chance
-                        // to verify the Tx status, so resolve this call
-                        errFlag |= TxErrorEnum.EventNotificationError;
-                        invokeStatus.SetFlag(errFlag);
-                        invokeStatus.SetErrMsg(TxErrorIndex.EventNotificationError, err.toString());
-                        resolve();
-                    }
-                );
-            }));
-        });
+        //                 // either explicit invalid event or valid event, verified in both cases by at least one peer
+        //                 invokeStatus.SetVerification(true);
+        //                 if (code !== 'VALID') {
+        //                     let err = new Error('Invalid transaction: ' + code);
+        //                     errFlag |= TxErrorEnum.BadEventNotificationError;
+        //                     invokeStatus.SetFlag(errFlag);
+        //                     invokeStatus.SetErrMsg(TxErrorIndex.BadEventNotificationError, err.toString());
+        //                     reject(err); // handle error in final catch
+        //                 } else {
+        //                     resolve();
+        //                 }
+        //             },
+        //             (err) => {
+        //                 clearTimeout(handle);
+        //                 // we don't know what happened, but give the other eventhub connections a chance
+        //                 // to verify the Tx status, so resolve this call
+        //                 errFlag |= TxErrorEnum.EventNotificationError;
+        //                 invokeStatus.SetFlag(errFlag);
+        //                 invokeStatus.SetErrMsg(TxErrorIndex.EventNotificationError, err.toString());
+        //                 resolve();
+        //             }
+        //         );
+        //     }));
+        // });
 
         let broadcastResponse;
         try {
@@ -819,21 +819,21 @@ async function invokebycontext(context, id, version, args, timeout){
             throw err;
         }
 
-        await Promise.all(eventPromises);
+        // await Promise.all(eventPromises);
         // if the Tx is not verified at this point, then every eventhub connection failed (with resolve)
         // so mark it failed but leave it not verified
-        if (!invokeStatus.IsVerified()) {
-            invokeStatus.SetStatusFail();
-            commUtils.log('Failed to complete transaction [' + txId.substring(0, 5) + '...]: every eventhub connection closed');
-        } else {
-            invokeStatus.Set('time_commit', Date.now());
-            invokeStatus.SetStatusSuccess();
-        }
+        // if (!invokeStatus.IsVerified()) {
+        //     invokeStatus.SetStatusFail();
+        //     commUtils.log('Failed to complete transaction [' + txId.substring(0, 5) + '...]: every eventhub connection closed');
+        // } else {
+        //     invokeStatus.Set('time_commit', Date.now());
+        //     invokeStatus.SetStatusSuccess();
+        // }
     } catch (err)
     {
         // at this point the Tx should be verified
         invokeStatus.SetStatusFail();
-        commUtils.log('Failed to complete transaction [' + txId.substring(0, 5) + '...]:' + (err instanceof Error ? err.stack : err));
+        commUtils.log('Failed to issue transaction [' + txId.substring(0, 5) + '...]:' + (err instanceof Error ? err.stack : err));
     }
 
     return invokeStatus;
