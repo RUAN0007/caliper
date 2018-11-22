@@ -274,7 +274,7 @@ function doTest(msg) {
     log('doTest() with:', msg);
     let cb = require(Util.resolvePath(msg.cb));
     blockchain = new bc(Util.resolvePath(msg.config), msg.kfk_config);
-
+    blockchain.registerBlockProcessing();
     beforeTest(msg);
     // start an interval to report results repeatedly
     let txUpdateInter = setInterval(txUpdate, txUpdateTime);
@@ -310,6 +310,7 @@ function doTest(msg) {
         }
     }).then(() => {
         clearUpdateInter();
+        blockchain.unRegisterBlockProcessing();
         return cb.end();
     }).then(() => {
         let allStats = [];

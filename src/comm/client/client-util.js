@@ -187,7 +187,7 @@ module.exports.sendMessage = sendMessage;
  */
 function stop() {
     for(let pid in processes) {
-        processes[pid].obj.kill();
+        processes[pid].obj.kill('SIGINT');
     }
     processes = {};
 }

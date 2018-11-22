@@ -122,6 +122,8 @@ class Fabric extends BlockchainInterface{
         block_info["timestamp"] = JSON.parse(blk_data).validTime;
 
         var block = JSON.parse(blk_data).block;
+        var process = require('process');
+        commUtils.log("Received Block " + block.header.number + " with " + block.data.data.length + " transactions from Process " + process.pid);
 
         for (var index = 0; index < block.data.data.length; index++) {
             var channel_header = block.data.data[index].payload.header.channel_header;
