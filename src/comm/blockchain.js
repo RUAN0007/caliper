@@ -209,6 +209,8 @@ class Blockchain {
                     tx_statuses.forEach(txn_status => {
                         if (!txn_status.IsVerified()) {
                             let txn_id = txn_status.GetID();
+                            txn_status.SetStatusFail();
+                            txn_status.SetVerification(true);
                             console.log('Time out txn [' + txn_id.substring(0, 5) + '...]:');
                         }
                     });
@@ -439,6 +441,9 @@ class Blockchain {
 
     static mergeDetailedDelayStats(results) {
         let skip = 0;
+        if (results === undefined) {
+            return 0;
+        }
         for(let i = 0 ; i < results.length ; i++) {
             let result = results[i];
             if(!result.hasOwnProperty('succ') || result.succ === 0) {

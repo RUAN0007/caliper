@@ -139,7 +139,7 @@ function registerBlockProcessing(clientIdx, callback) {
             } else {
               invalid_ratio = invalid_sample_count / sample_count;
             }
-            commUtils.log("Sampled Invalid Ratio: " + invalid_ratio);
+            // commUtils.log("Sampled Invalid Ratio: " + invalid_ratio);
 
             for (var index = 0; index < block.data.data.length; index++) {
                 var channel_header = block.data.data[index].payload.header.channel_header;
