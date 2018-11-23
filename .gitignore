@@ -29,3 +29,5 @@ zookeeper.out
 .vscode/*
 
 *sublime*
+
+*.pyc
