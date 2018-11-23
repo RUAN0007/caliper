@@ -28,19 +28,21 @@ Preliminaries:
 
 CLUSTER_DIR="/users/ruanpc/caliper/network/fabric/cluster"
 
-# ZK_START=40
-# ZK_END=42
-# ZK_PORT=2181
-# ZK_DATA="/data/ruanpc/zookeeper"
-# ZK_CONFIGFILE_TEMPLATE=CLUSTER_DIR+"/zk-config/zookeeper.properties.template"
-# ZK_CONFIGFILE=CLUSTER_DIR+"/zk-config/zookeeper.properties"
+KFK_DIR= CLUSTER_DIR + "/kafka"
 
-# KFK_DATA="/data/ruanpc/kafka"
-# KFK_START=40
-# KFK_END=43
-# KFK_CONFIGFILE_TEMPLATE=CLUSTER_DIR+"/kafka-config/server.properties.template"
-# KFK_CONFIGFILE=CLUSTER_DIR+"/kafka-config/server-{}.properties"
-# KFK_LOG="/data/ruanpc/kafka_log"
+ZK_START=40
+ZK_END=42
+ZK_PORT=2181
+ZK_DATA="/data/ruanpc/zookeeper"
+ZK_CONFIGFILE_TEMPLATE=KFK_DIR+"/zk-config/zookeeper.properties.template"
+ZK_CONFIGFILE=KFK_DIR+"/zk-config/zookeeper.properties"
+
+KFK_DATA="/data/ruanpc/kafka"
+KFK_START=40
+KFK_END=43
+KFK_CONFIGFILE_TEMPLATE=KFK_DIR+"/kafka-config/server.properties.template"
+KFK_CONFIGFILE=KFK_DIR+"/kafka-config/server-{}.properties"
+KFK_LOG="/data/ruanpc/kafka_log"
 
 # CA_NODE="slave-6"
 # CA_COMPOSE_FILE=EXP_DIR+"/ca-docker-compose.yaml"
