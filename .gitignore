@@ -31,3 +31,4 @@ zookeeper.out
 *sublime*
 
 *.pyc
+*.log

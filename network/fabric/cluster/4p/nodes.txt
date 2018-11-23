@@ -1,4 +1,0 @@
-slave-4
-slave-5
-slave-6
-slave-7
