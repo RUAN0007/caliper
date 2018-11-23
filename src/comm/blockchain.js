@@ -17,9 +17,8 @@ class Blockchain {
      * Constructor
      * @param {String} configPath path of the blockchain configuration file
      */
-    constructor(configPath, kfk_config) {
+    constructor(configPath) {
         let config = require(configPath);
-        this.kfk_config = kfk_config;
         // A global map to associate unconfirmed txn ID to its status
         this.unconfirmed_txn_map = {};
         // An array of 3-value tuple, <an array of unconfirmed txn_status, resolve, time_out>
@@ -77,42 +76,14 @@ class Blockchain {
     }
 
     
-    registerBlockProcessing() {
-        console.log("Register block processing...");
-        this.blk_processing = true;
-        var kafka = require('kafka-node');
-        var Consumer = kafka.Consumer;
+    registerBlockProcessing(clientIdx) {
+        console.log("Register for block processing...");
 
-        var kfk_client = new kafka.KafkaClient({ kafkaHost: this.kfk_config.broker_urls, requestTimeout: 300000000 });
-        var options = {
-            autoCommit: true,
-            fetchMaxWaitMs: 1000,
-            fetchMaxBytes: 4096 * 4096,
-            encoding: 'buffer',
-            //requestTimeout:300000
-            // Kafka consumers on each client process are in the different consumer groups
-            //   So that each block (kafka msg) will be directed to each consumer. 
-            groupId: "client_group_" + process.pid
-        };
-
-        var topics = [{
-            topic: this.kfk_config.topic
-        }];
-        
-        let kfk_consumer = new Consumer(kfk_client, topics, options);
-        this.kfk_client = kfk_client;
-        this.kfk_consumer = kfk_consumer;
-
-        let bcObj = this.bcObj;
         let self = this;
 
-        kfk_consumer.on('message', function (message) {
-            var buf = new Buffer(message.value);
-            var blk_data = buf.toString('utf-8');
-            let block_info = bcObj.getBlockInfo(blk_data);
-            let blk_time = block_info.timestamp;
-            let valid_txnIds = block_info.valid_txnIds;
-            let invalid_txnIds = block_info.invalid_txnIds;
+        this.bcObj.registerBlockProcessing(clientIdx, function (valid_txnIds, invalid_txnIds) {
+
+            let blk_time = Date.now();
 
             // Filter txns by map
             valid_txnIds.forEach(valid_txnId => {
@@ -164,18 +135,7 @@ class Blockchain {
 
     unRegisterBlockProcessing() {
         console.log("Unregistered Block processing...");
-        this.kfk_consumer.close();
-        this.kfk_client.close();
-    }
-
-    unRegisterNewBlock() {
-        return this.bcObj.unRegisterNewBlock()
-    }
-
-    // Register an event handler to submit every new block to kafka
-    registerNewBlock(kfk_producer) {
-        let topic = this.kfk_config.topic;
-        return this.bcObj.registerNewBlock(kfk_producer, topic);
+        this.bcObj.unRegisterBlockProcessing();
     }
 
     /**
@@ -192,8 +152,8 @@ class Blockchain {
      * @param {Object} args adapter specific arguments
      * @return {Promise} obtained context object
      */
-    getContext(name, args) {
-        return this.bcObj.getContext(name, args);
+    getContext(name, args, clientIdx) {
+        return this.bcObj.getContext(name, args, clientIdx);
     }
 
     /**
@@ -258,102 +218,6 @@ class Blockchain {
                 self.txn_batches.push([tx_statuses, resolve, resolve_timeout]);
             });
 
-            // Create a kafka consumer
-            // Create a promise. 
-            // In the promise, register for new block
-            //   When a block comes, delegate bcObj to check for the existence of txn
-            //   Resolve when all txns have been included
-            // DON't FORGET to set a time out. 
-            // return new Promise((resolve, reject) => {
-            //     // Create a map to associate each txnID to its status
-            //     //   These txns will be checked with the blocks
-            //     let bcObj = this.bcObj;
-            //     let txn_map = {};
-            //     let finished_tx_statuses = [];  
-            //     tx_statuses.forEach(txn => {
-            //         if (txn.IsStatusFailed() || txn.IsVerified()) {
-            //             finished_tx_statuses.push(txn);
-            //         } else {
-            //             txn_map[txn.GetID()] = txn;
-            //         }
-            //     });
-
-            //     // an array of txn which have been detected in the block.
-
-            //     var kafka = require('kafka-node');
-            //     var Consumer = kafka.Consumer;
-
-            //     var kfk_client = new kafka.KafkaClient({ kafkaHost: this.kfk_config.broker_urls, requestTimeout: 300000000 });
-            //     var options = {
-            //         autoCommit: true,
-            //         fetchMaxWaitMs: 1000,
-            //         fetchMaxBytes: 4096 * 4096,
-            //         encoding: 'buffer',
-            //         //requestTimeout:300000
-            //         // Kafka consumers on each client process are in the different consumer groups
-            //         //   So that each block (kafka msg) will be directed to each consumer. 
-            //         groupId: "client_group_" + process.pid
-            //     };
-
-            //     var topics = [{
-            //         topic: this.kfk_config.topic
-            //     }];
-                
-            //     var kfk_consumer = new Consumer(kfk_client, topics, options);
-
-            //     let resolve_timeout = setTimeout(() => {
-            //         // Treat all undetected txns as failed. 
-            //         Object.keys(txn_map).forEach(function(txn_id) {
-            //             if (!txn_map[txn_id].IsVerified()) {
-            //                 txn_map[txn_id].SetStatusFail();
-            //                 finished_tx_statuses.push(txn_map[txn_id]);
-            //                 console.log('Time out txn [' + txn_id.substring(0, 5) + '...]:');
-            //             }
-            //         });
-            //         kfk_consumer.close();
-            //         resolve(finished_tx_statuses);
-            //     }, // 20s to time out
-            //     20 * 1000);
-                
-            //     kfk_consumer.on('message', function (message) {
-            //         var buf = new Buffer(message.value);
-            //         var blk_data = buf.toString('utf-8');
-
-            //         let block_info = bcObj.getBlockInfo(blk_data);
-            //         let blk_time = block_info.timestamp;
-            //         let valid_txnIds = block_info.valid_txnIds;
-            //         let invalid_txnIds = block_info.invalid_txnIds;
-
-            //         valid_txnIds.forEach(txn_id => {
-            //             if (txn_map.hasOwnProperty(txn_id)) {
-            //                 txn_map[txn_id].SetStatusSuccess();
-            //                 txn_map[txn_id].SetVerification(true);
-            //                 txn_map[txn_id].Set('time_commit', blk_time);
-            //                 finished_tx_statuses.push(txn_map[txn_id]);
-            //             }
-            //         });
-
-            //         invalid_txnIds.forEach(txn_id => {
-            //             if (txn_map.hasOwnProperty(txn_id)) {
-            //                 txn_map[txn_id].SetStatusFail();
-            //                 txn_map[txn_id].SetVerification(true);
-            //                 finished_tx_statuses.push(txn_map[txn_id]);
-            //             }
-            //         });
-                    
-            //         // All issued txns have been detected
-            //         if (finished_tx_statuses.length === tx_statuses.length) {
-            //             clearTimeout(resolve_timeout);
-            //             kfk_consumer.close();
-            //             resolve(finished_tx_statuses);
-            //         }
-            //     });
-
-            //     kfk_consumer.on('error', function (error) {
-            //         console.log("Error from consumers.", error);
-            //         reject(error);
-            //     });
-            // });
         });
     }
 

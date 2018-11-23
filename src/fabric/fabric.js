@@ -46,20 +46,17 @@ class Fabric extends BlockchainInterface{
             });
     }
 
-    unRegisterNewBlock() {
-        return e2eUtils.unRegisterNewBlock();
-    }
-
-    registerNewBlock(kfk_producer, topic) {
+    registerBlockProcessing(clientIdx, callback) {
         util.init(this.configPath);
         e2eUtils.init(this.configPath);
-        kfk_producer.on('error', function (err) {
-            commUtils.log('Kafka Producer is not ready before block registration.' + (err.stack ? err.stack : err));
-            return Promise.reject(err);
-        });
 
-        return e2eUtils.registerNewBlock(kfk_producer, topic);
+        return e2eUtils.registerBlockProcessing(clientIdx, callback);
     }
+
+    unRegisterBlockProcessing() {
+        return e2eUtils.unRegisterBlockProcessing();
+    }
+
 
     /**
      * Deploy the chaincode specified in the network configuration file to all peers.
@@ -82,7 +79,7 @@ class Fabric extends BlockchainInterface{
      * @param {object} args Unused.
      * @return {object} The assembled Fabric context.
      */
-    getContext(name, args) {
+    getContext(name, args, clientIdx) {
         util.init(this.configPath);
         e2eUtils.init(this.configPath);
 
@@ -100,7 +97,7 @@ class Fabric extends BlockchainInterface{
             return Promise.reject(new Error('could not find context\'s information in config file'));
         }
 
-        return e2eUtils.getcontext(channel);
+        return e2eUtils.getcontext(channel, clientIdx);
 
     }
 
@@ -115,23 +112,6 @@ class Fabric extends BlockchainInterface{
         });
     }
 
-    getBlockInfo(blk_data) {
-        let block_info = {};
-        block_info["valid_txnIds"] = [];
-        block_info["invalid_txnIds"] = [];
-        block_info["timestamp"] = JSON.parse(blk_data).validTime;
-
-        var block = JSON.parse(blk_data).block;
-        var process = require('process');
-        commUtils.log("Received Block " + block.header.number + " with " + block.data.data.length + " transactions from Process " + process.pid);
-
-        for (var index = 0; index < block.data.data.length; index++) {
-            var channel_header = block.data.data[index].payload.header.channel_header;
-            block_info.valid_txnIds.push(channel_header.tx_id);
-        }
-
-        return block_info;
-    }
 
     /**
      * Invoke the given chaincode according to the specified options. Multiple transactions will be generated according to the length of args.

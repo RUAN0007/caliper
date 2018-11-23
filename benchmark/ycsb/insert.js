@@ -109,8 +109,8 @@ module.exports.init = function(blockchain, context, args) {
     }
     fieldLength = args.fieldLength;
 
-    recordStartIdx = args.clientIdx * args.numb;
-    recordCount = args.numb;
+    recordStartIdx = context.clientIdx * context.op_numb;
+    recordCount = context.op_numb;
     bc = blockchain;
     contx = context;
     return Promise.resolve();

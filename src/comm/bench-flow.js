@@ -30,12 +30,6 @@ let demo = require('../gui/src/demo.js');
 let absConfigFile, absNetworkFile;
 let absCaliperDir = path.join(__dirname, '..', '..');
 
-let kafka_process;
-let kafka_config;
-
-
-
-
 /**
  * Generate mustache template for test report
  */
@@ -292,8 +286,7 @@ function defaultTest(args, clientArgs, final) {
                 trim: args.trim ? args.trim : 0,
                 args: args.arguments,
                 cb  : args.callback,
-                config: configPath,
-                kfk_config: kafka_config
+                config: configPath
             };
             // condition for time based or number based test driving
             if (args.txNumber) {
@@ -356,7 +349,7 @@ module.exports.run = function(configFile, networkFile) {
         absConfigFile  = Util.resolvePath(configFile);
         absNetworkFile = Util.resolvePath(networkFile);
 
-        blockchain = new Blockchain(absNetworkFile, kafka_config);
+        blockchain = new Blockchain(absNetworkFile);
         //monitor = new Monitor(absConfigFile);
         client  = new Client(absConfigFile);
         //createReport();
@@ -384,24 +377,6 @@ module.exports.run = function(configFile, networkFile) {
         let contracts_config = config.contracts;
         startPromise.then(() => {
             return blockchain.init();
-        }).then( () => {
-            // Launch a separate process to submit blocks to kafka
-            let absKfkConfigFile = path.join(absCaliperDir, 'network', 'kafka', 'kafka-config.json');
-            kafka_config = require(absKfkConfigFile);
-            
-            let kafka_msg = {kfk_config: kafka_config, absNetworkFile: absNetworkFile};
-            let blockListenerPath = path.join(absCaliperDir, 'src', 'comm', 'block-listener.js');
-            kafka_process = childProcess.fork(blockListenerPath);
-
-            kafka_process.on('error', function () {
-                console.log("Kafka process encountered an error. ");
-            });
-
-            kafka_process.on('exit', function () {
-                console.log("Kafka process exits normally. ");
-            });
-            t.comment("Launch the kafka child process"); 
-            kafka_process.send(kafka_msg);
         }).then( () => {
             return blockchain.installSmartContract(contracts_config);
         }).then( () => {
@@ -438,7 +413,6 @@ module.exports.run = function(configFile, networkFile) {
              demo.stopWatch("");
              return Promise.resolve();
         }).then( () => {
-            kafka_process.kill('SIGINT');
             client.stop();
             if (config.hasOwnProperty('command') && config.command.hasOwnProperty('end')){
                 log(config.command.end);

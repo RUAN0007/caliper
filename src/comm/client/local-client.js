@@ -214,9 +214,6 @@ async function runFixedNumber(msg, cb, context) {
     log('Info: client ' + process.pid +  ' start test runFixedNumber()' + (cb.info ? (':' + cb.info) : ''));
     let rateControl = new RateControl(msg.rateControl, blockchain);
     rateControl.init(msg);
-    if (msg.args === undefined) {msg.args = {};}
-    msg.args.clientIdx = msg.hostIdx * msg.clients + msg.clientIdx;
-    msg.args.numb = msg.numb;
     await cb.init(blockchain, context, msg.args);
     startTime = Date.now();
 
@@ -247,7 +244,6 @@ async function runDuration(msg, cb, context) {
     rateControl.init(msg);
     const duration = msg.txDuration; // duration in seconds
 
-    msg.args.clientIdx = msg.hostIdx * msg.clients + msg.clientIdx;
     await cb.init(blockchain, context, msg.args);
     startTime = Date.now();
 
@@ -273,8 +269,9 @@ async function runDuration(msg, cb, context) {
 function doTest(msg) {
     log('doTest() with:', msg);
     let cb = require(Util.resolvePath(msg.cb));
-    blockchain = new bc(Util.resolvePath(msg.config), msg.kfk_config);
-    blockchain.registerBlockProcessing();
+    blockchain = new bc(Util.resolvePath(msg.config));
+    let clientIdx = msg.hostIdx * msg.clients + msg.clientIdx;
+    blockchain.registerBlockProcessing(clientIdx);
     beforeTest(msg);
     // start an interval to report results repeatedly
     let txUpdateInter = setInterval(txUpdate, txUpdateTime);
@@ -290,18 +287,22 @@ function doTest(msg) {
         }
     };
 
-    return blockchain.getContext(msg.label, msg.clientargs).then((context) => {
+    return blockchain.getContext(msg.label, msg.clientargs, clientIdx).then((context) => {
         if(typeof context === 'undefined') {
             context = {
                 engine : {
                     submitCallback : submitCallback
-                }
+                },
+                clientIdx: clientIdx,
+                op_numb: msg.numb
             };
         }
         else {
             context.engine = {
                 submitCallback : submitCallback
             };
+            context.clientIdx = clientIdx;
+            context.op_numb = msg.numb;
         }
         if (msg.txDuration) {
             return runDuration(msg, cb, context);

@@ -48,14 +48,14 @@ function init(config_path) {
 }
 module.exports.init = init;
 
-function unRegisterNewBlock() {
+function unRegisterBlockProcessing() {
     commUtils.log("Unregister the block event for Fabric. ");
     blk_event_hub.unregisterBlockEvent(blk_registration, true);
     blk_event_hub.disconnect();
 }
-module.exports.unRegisterNewBlock = unRegisterNewBlock;
+module.exports.unRegisterBlockProcessing = unRegisterBlockProcessing;
 
-function registerNewBlock(kfk_producer, topic, partition_count) {
+function registerBlockProcessing(clientIdx, callback) {
     Client.setConfigSetting('request-timeout', 120000);
 
     let channel = testUtil.getDefaultChannel();
@@ -63,7 +63,9 @@ function registerNewBlock(kfk_producer, topic, partition_count) {
         return Promise.reject(new Error('could not find channel in config'));
     }
     const channel_name = channel.name;
-    const userOrg = channel.organizations[0];
+
+    let idx = clientIdx % channel.organizations.length;
+    const userOrg = channel.organizations[idx];
 
     const client = new Client();
     channel = client.newChannel(channel_name);
@@ -73,20 +75,21 @@ function registerNewBlock(kfk_producer, topic, partition_count) {
     cryptoSuite.setCryptoKeyStore(Client.newCryptoKeyStore({path: testUtil.storePathForOrg(orgName)}));
     client.setCryptoSuite(cryptoSuite);
 
-    const caRootsPath = ORGS.orderers[0].tls_cacerts;
+    let oidx = clientIdx % ORGS.orderers.length;
+    const caRootsPath = ORGS.orderers[oidx].tls_cacerts;
     let data = fs.readFileSync(commUtils.resolvePath(caRootsPath));
     let caroots = Buffer.from(data).toString();
 
     channel.addOrderer(
         client.newOrderer(
-            ORGS.orderers[0].url,
+            ORGS.orderers[oidx].url,
             {
                 'pem': caroots,
                 'ssl-target-name-override': ORGS.orderers[0]['server-hostname']
             }
         )
     );
-
+    
     return Client.newDefaultKeyValueStore({
         path: testUtil.storePathForOrg(orgName)
     }).then((store) => {
@@ -107,6 +110,9 @@ function registerNewBlock(kfk_producer, topic, partition_count) {
                                 'ssl-target-name-override': ORGS[org][key]['server-hostname']
                             });
                         channel.addPeer(peer);
+                        if(org === userOrg) {
+                           blk_event_hub = channel.newChannelEventHub(peer);
+                        }
                     }
                 }
             }
@@ -116,29 +122,16 @@ function registerNewBlock(kfk_producer, topic, partition_count) {
     }, (err) => {
         throw new Error('Failed to enroll user \'admin\'. ' + err);
     }).then(() => {
-        let eh = channel.getChannelEventHubsForOrg()[0];
-        blk_registration = eh.registerBlockEvent((block) => {
-            var event_data = {};
-            event_data.validTime = Date.now();
-            event_data.block = block;
-
-            // commUtils.log("Received Block No", block.header.number, "at", event_data.validTime);
-
-            var payload = [{
-                topic: topic,
-                messages: JSON.stringify(event_data),
-                partition: 0,
-                attributes: 1
-            }];
-
-            kfk_producer.send(payload, function (error, result) {
-                if (error) {
-                    commUtils.log("Error while publishing block in kafka");
-                    return Promise.reject(error);
-                } else {
-                    // commUtils.log("Successfully push the block to kafka brokers");
-                }
-            });
+        blk_registration = blk_event_hub.registerBlockEvent((block) => {
+            var process = require('process');
+            // commUtils.log("Received Block " + block.header.number + " with " + block.data.data.length + " transactions from Process " + process.pid);
+            let valid_txnIds = [];
+            let invalid_txnIds = [];
+            for (var index = 0; index < block.data.data.length; index++) {
+                var channel_header = block.data.data[index].payload.header.channel_header;
+                valid_txnIds.push(channel_header.tx_id);
+            }
+            callback(valid_txnIds, invalid_txnIds);
 
         }, (err) => {
             commUtils.log("Fail to register block event");
@@ -146,8 +139,7 @@ function registerNewBlock(kfk_producer, topic, partition_count) {
         },
             {unregister: false, disconnect: false}
         );
-        eh.connect(true);
-        blk_event_hub = eh;
+        blk_event_hub.connect(true);
         Promise.resolve();
     }).then(()=>{
         return Promise.resolve();
@@ -156,7 +148,7 @@ function registerNewBlock(kfk_producer, topic, partition_count) {
     });    
 }
 
-module.exports.registerNewBlock = registerNewBlock;
+module.exports.registerBlockProcessing = registerBlockProcessing;
 
 
 /**
@@ -527,12 +519,12 @@ function getOrgPeers(orgName) {
  * @param {object} channelConfig The channel object from the configuration file.
  * @return {Promise<object>} The created Fabric context.
  */
-function getcontext(channelConfig) {
+function getcontext(channelConfig, clientIdx) {
     Client.setConfigSetting('request-timeout', 120000);
     const channel_name = channelConfig.name;
     // var userOrg = channelConfig.organizations[0];
     // choose a random org to use, for load balancing
-    const idx = Math.floor(Math.random() * channelConfig.organizations.length);
+    const idx = clientIdx % channelConfig.organizations.length;
     const userOrg = channelConfig.organizations[idx];
 
     const client = new Client();
@@ -543,7 +535,7 @@ function getcontext(channelConfig) {
     cryptoSuite.setCryptoKeyStore(Client.newCryptoKeyStore({path: testUtil.storePathForOrg(orgName)}));
     client.setCryptoSuite(cryptoSuite);
 	
-    let oidx = Math.floor(Math.random() * ORGS.orderers.length);
+    let oidx = clientIdx % ORGS.orderers.length;
     const caRootsPath = ORGS.orderers[oidx].tls_cacerts;
     let data = fs.readFileSync(commUtils.resolvePath(caRootsPath));
     let caroots = Buffer.from(data).toString();
