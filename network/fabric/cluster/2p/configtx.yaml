@@ -38,8 +38,8 @@ Orderer:
   - slave-31:7050
   BatchSize: &id007
     AbsoluteMaxBytes: 99 MB
-    MaxMessageCount: 10
-    PreferredMaxBytes: 512 KB
+    MaxMessageCount: 500
+    PreferredMaxBytes: 5120 KB
   BatchTimeout: 2s
   Kafka: &id008
     Brokers:
@@ -67,14 +67,14 @@ Organizations:
   Name: OrdererOrg
 - &id001
   AnchorPeers:
-  - Host: slave-4
+  - Host: slave-40
     Port: 7051
   ID: Org1MSP
   MSPDir: /users/ruanpc/caliper/network/fabric/cluster/2p/crypto_config/peerOrganizations/org1.example.com/msp
   Name: Org1MSP
 - &id002
   AnchorPeers:
-  - Host: slave-5
+  - Host: slave-41
     Port: 7051
   ID: Org2MSP
   MSPDir: /users/ruanpc/caliper/network/fabric/cluster/2p/crypto_config/peerOrganizations/org2.example.com/msp
