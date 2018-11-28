@@ -294,7 +294,8 @@ function doTest(msg) {
                     submitCallback : submitCallback
                 },
                 clientIdx: clientIdx,
-                op_numb: msg.numb
+                op_numb: msg.numb,
+                contractID: msg.contractID
             };
         }
         else {
@@ -303,6 +304,7 @@ function doTest(msg) {
             };
             context.clientIdx = clientIdx;
             context.op_numb = msg.numb;
+            context.contractID = msg.contractID;
         }
         if (msg.txDuration) {
             return runDuration(msg, cb, context);

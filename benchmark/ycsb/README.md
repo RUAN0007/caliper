@@ -5,15 +5,15 @@ Otherwise, some record may be missing and Fabric will report an error if the que
 # To Run with Fabric
 Start up the fabric network sequentially
 ```
- python ../../network/fabric/cluster/script/launch.py ../../network/fabric/cluster/2p/ up;
+ python ../../network/fabric/cluster/script/launch.py ../../network/fabric/cluster/env/2p/ up;
 ```
 
 Start up the driver with the network config as the parameters
 ```
-node main.js -n ../../network/fabric/cluster/2p/setup.json
+node main.js -n ../../network/fabric/cluster/env/2p/setup.json
 ```
 
 End the fabric and kafka network sequentially. 
 ```
-python ../../network/fabric/cluster/script/launch.py ../../network/fabric/cluster/2p/ down;
+python ../../network/fabric/cluster/script/launch.py ../../network/fabric/cluster/env/2p/ down;
 ```

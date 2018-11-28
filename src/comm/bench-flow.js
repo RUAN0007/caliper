@@ -270,7 +270,7 @@ function processResult(results, label){
  * @param {Boolean} final =true, the last test round; otherwise, =false
  * @return {Promise} promise object
  */
-function defaultTest(args, clientArgs, final) {
+function defaultTest(args, clientArgs, contractID, final) {
     return new Promise( function(resolve, reject) {
         const t = global.tapeObj;
         t.comment('\n\n###### testing \'' + args.label + '\' ######');
@@ -286,7 +286,8 @@ function defaultTest(args, clientArgs, final) {
                 trim: args.trim ? args.trim : 0,
                 args: args.arguments,
                 cb  : args.callback,
-                config: configPath
+                config: configPath,
+                contractID: contractID
             };
             // condition for time based or number based test driving
             if (args.txNumber) {
@@ -354,6 +355,7 @@ module.exports.run = function(configFile, networkFile) {
         client  = new Client(absConfigFile);
         //createReport();
         demo.init();
+        let contractID;
         let config = require(absConfigFile);
         let startPromise = new Promise((resolve, reject) => {
             if (config.hasOwnProperty('command') && config.command.hasOwnProperty('start')){
@@ -379,7 +381,9 @@ module.exports.run = function(configFile, networkFile) {
             return blockchain.init();
         }).then( () => {
             return blockchain.installSmartContract(contracts_config);
-        }).then( () => {
+        }).then( (contract_id) => {
+            contractID = contract_id;
+            log("Installed ContractID: " + contractID + "\n" );
             return client.init().then((number)=>{
                 return blockchain.prepareClients(number);
             });
@@ -389,14 +393,13 @@ module.exports.run = function(configFile, networkFile) {
          //   }).catch( (err) => {
          //       log('could not start monitor, ' + (err.stack ? err.stack : err));
          //   });
-
             let allTests  = require(absConfigFile).test.rounds;
             let testIdx   = 0;
             let testNum   = allTests.length;
             return allTests.reduce( (prev, item) => {
                 return prev.then( () => {
                     ++testIdx;
-                    return defaultTest(item, clientArgs, (testIdx === testNum));
+                    return defaultTest(item, clientArgs, contractID, (testIdx === testNum));
                 });
             }, Promise.resolve());
         }).then( () => {

@@ -66,7 +66,7 @@ class Fabric extends BlockchainInterface{
         // todo: now all chaincodes are installed and instantiated in all peers, should extend this later
         return impl_install.run(chaincodes_config, this.configPath).then(() => {
             return impl_instantiate.run(chaincodes_config, this.configPath);
-        })
+        }).then(() => {return chaincodes_config[0].id})  // Temporarily assume there exists a single chaincode
             .catch((err) => {
                 commUtils.log('fabric.installSmartContract() failed, ' + (err.stack ? err.stack : err));
                 return Promise.reject(err);

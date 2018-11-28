@@ -165,12 +165,12 @@ module.exports.run = function() {
         for (let i=0; i < txnPerBatch; ++i) {
           let key = nextKey();
           // console.log("Queried Key: ", key);
-          read_promises.push(bc.queryState(contx, 'ycsb', 'v0', "abcds"));
+          read_promises.push(bc.queryState(contx, contx.contractID, 'v0', "abcds"));
         }
         return Promise.all(read_promises);
     } else {
         let args = generateWorkload();
-        return bc.invokeSmartContract(contx, 'ycsb', 'v0', args, 30);
+        return bc.invokeSmartContract(contx, contx.contractID, 'v0', args, 30);
     }
 };
 
