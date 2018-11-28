@@ -1,5 +1,5 @@
 #!/bin/bash
-# node_count
+# <node_count> -p
 cd `dirname ${BASH_SOURCE-$0}`
 . env.sh
 
@@ -10,7 +10,7 @@ i=0
 for host in `cat $HOSTS`; do
   if [[ $i -lt $1 ]]; then
     echo [*] Configuring node $i on host $host
-    ssh -oStrictHostKeyChecking=no  ruanpc@$host $QUO_HOME/init.sh $i $1
+    ssh -oStrictHostKeyChecking=no  ruanpc@$host $QUO_HOME/init.sh $i $1 $2
     echo done node $host
   fi
   let i=$i+1
