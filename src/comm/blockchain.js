@@ -44,6 +44,11 @@ class Blockchain {
             this.bcType = 'composer';
             this.bcObj = new composer(configPath);
         }
+        else if(config.hasOwnProperty('quorum')) {
+            let quorum = require('../quorum/quorum.js');
+            this.bcType = 'quorum';
+            this.bcObj = new quorum(configPath);
+        }
         else {
             this.bcType = 'unknown';
             throw new Error('Unknown blockchain config file ' + configPath);

@@ -37,10 +37,12 @@
     "ps-node": "^0.1.6",
     "request": "^2.81.0",
     "request-promise": "^4.2.1",
+    "solc": "^0.4.25",
     "systeminformation": "^3.23.7",
     "table": "^4.0.1",
     "tape": "^4.8.0",
-    "tape-promise": "^1.1.0"
+    "tape-promise": "^1.1.0",
+    "web3": "^0.20.0"
   },
   "devDependencies": {
     "chai": "^3.5.0",
