@@ -15,3 +15,5 @@ for host in `cat $HOSTS`; do
   fi
   let i=$i+1
 done
+
+python prepare.py $1 $HOSTS keys/ ${QUO_DATA}/setup.json $2
