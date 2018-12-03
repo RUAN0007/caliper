@@ -27,7 +27,7 @@ let distribution;
 let buildKey;
 let buildValue;
 
-let operation_type = ['insert', 'update', 'delete', 'readmodifywrite'];
+let operation_type = ['insert', 'update', 'remove', 'readmodifywrite'];
 
 let uniform_sampler;
 let zipf_sampler;

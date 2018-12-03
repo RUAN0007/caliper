@@ -41,7 +41,7 @@ func (t *YCSBChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 		return t.Update(stub, args)
 	case "readmodifywrite":
 		return t.ReadModifyWrite(stub, args)
-	case "delete":
+	case "remove":
 		return t.Delete(stub, args)
 	case "query":
 		return t.Read(stub, args)
