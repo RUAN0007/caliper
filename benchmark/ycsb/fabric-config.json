@@ -18,7 +18,7 @@
       {
         "label" : "insert",
         "txNumber" : [10000],
-        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 200}}],
+        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 10}}],
         "arguments": {"txnPerBatch":50, "fieldCount": 10, "fieldLength": 15, "orderedInserts": 1},
         "callback" : "benchmark/ycsb/insert.js"
       }

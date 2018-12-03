@@ -205,6 +205,25 @@ class Blockchain {
         return this.bcObj.invokeSmartContract(context, contractID, contractVer, arg, time).then((tx_statuses)=> {
             let allConfirmed = true;
             tx_statuses.forEach(txn_status => {
+                txn_status.Set('operation', 'invoke');
+            ////////////////////////////////////////////////////////
+            // These four metric fields are used by Fabric only.
+            // However, we still set them even if other platforms donot need them,
+            // as these metrics will be read and compiled for statistics collector. 
+
+                if (txn_status.Get('time_create') === undefined) { 
+                    txn_status.Set('time_create', Date.now());
+                }
+                if (txn_status.Get('time_endorse') === undefined) { 
+                    txn_status.Set('time_endorse', Date.now());
+                }
+                if (txn_status.Get('time_order') === undefined) { 
+                    txn_status.Set('time_order', Date.now());
+                }
+                if (txn_status.Get('time_commit') === undefined) { 
+                    txn_status.Set('time_commit', Date.now());
+                }
+            ///////////////////////////////////////////////////////
                 if (!txn_status.IsVerified()) {
                     allConfirmed = false;
                     self.unconfirmed_txn_map[txn_status.GetID()] = txn_status;
@@ -243,7 +262,11 @@ class Blockchain {
      */
     queryState(context, contractID, contractVer, key) {
         context.engine.submitCallback(1);
-        return this.bcObj.queryState(context, contractID, contractVer, key);
+        return this.bcObj.queryState(context, contractID, contractVer, key)
+            .then((txStatus)=>{
+                txStatus.Set('operation', 'query');
+                return Promise.resolve(txStatus);
+            });
     }
 
     /**

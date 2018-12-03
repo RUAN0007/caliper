@@ -10,7 +10,7 @@ Start up the fabric network sequentially
 
 Start up the driver with the network config as the parameters
 ```
-node main.js -n ../../network/fabric/cluster/env/2p/setup.json
+node main.js -c fabric-config.json -n ../../network/fabric/cluster/env/2p/setup.json
 ```
 
 End the fabric and kafka network sequentially. 
