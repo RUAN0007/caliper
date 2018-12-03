@@ -199,30 +199,35 @@ class Blockchain {
         }
 
         let self = this;
+
+        context.engine.submitCallback(arg.length);
+
         return this.bcObj.invokeSmartContract(context, contractID, contractVer, arg, time).then((tx_statuses)=> {
-            // tx_statuses.forEach(tx_stat => {
-            //     tx_stat.SetStatusSuccess();
-            //     tx_stat.Set('time_commit', Date.now());
-            // });
-
+            let allConfirmed = true;
             tx_statuses.forEach(txn_status => {
-                self.unconfirmed_txn_map[txn_status.GetID()] = txn_status;
+                if (!txn_status.IsVerified()) {
+                    allConfirmed = false;
+                    self.unconfirmed_txn_map[txn_status.GetID()] = txn_status;
+                }
             });
-
             return new Promise((resolve, reject) => {
-                let resolve_timeout = setTimeout(() => {
-                    tx_statuses.forEach(txn_status => {
-                        if (!txn_status.IsVerified()) {
-                            let txn_id = txn_status.GetID();
-                            txn_status.SetStatusFail();
-                            txn_status.SetVerification(true);
-                            console.log('Time out txn [' + txn_id.substring(0, 5) + '...]:');
-                        }
-                    });
+                if (allConfirmed) {
                     resolve(tx_statuses);
-                }, 40 * 1000); // 20s to time out
-                // Resolve will be called during block processing. 
-                self.txn_batches.push([tx_statuses, resolve, resolve_timeout]);
+                } else {
+                    let resolve_timeout = setTimeout(() => {
+                        tx_statuses.forEach(txn_status => {
+                            if (!txn_status.IsVerified()) {
+                                let txn_id = txn_status.GetID();
+                                txn_status.SetStatusFail();
+                                txn_status.SetVerification(true);
+                                console.log('Time out txn [' + txn_id.substring(0, 5) + '...]:');
+                            }
+                        });
+                        resolve(tx_statuses);
+                    }, 40 * 1000); // 40s to time out
+                    // Resolve will be called during block processing. 
+                    self.txn_batches.push([tx_statuses, resolve, resolve_timeout]);
+                }
             });
 
         });
@@ -237,6 +242,7 @@ class Blockchain {
      * @return {Promise} as invokeSmateContract()
      */
     queryState(context, contractID, contractVer, key) {
+        context.engine.submitCallback(1);
         return this.bcObj.queryState(context, contractID, contractVer, key);
     }
 
