@@ -56,6 +56,7 @@ function unRegisterBlockProcessing() {
     commUtils.log("Unregister the block event for Fabric. ");
     blk_event_hub.unregisterBlockEvent(blk_registration, true);
     blk_event_hub.disconnect();
+    return Promise.resolve();
 }
 module.exports.unRegisterBlockProcessing = unRegisterBlockProcessing;
 

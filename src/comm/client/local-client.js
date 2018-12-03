@@ -271,7 +271,6 @@ function doTest(msg) {
     let cb = require(Util.resolvePath(msg.cb));
     blockchain = new bc(Util.resolvePath(msg.config));
     let clientIdx = msg.hostIdx * msg.clients + msg.clientIdx;
-    blockchain.registerBlockProcessing(clientIdx);
     beforeTest(msg);
     // start an interval to report results repeatedly
     let txUpdateInter = setInterval(txUpdate, txUpdateTime);
@@ -287,7 +286,9 @@ function doTest(msg) {
         }
     };
 
-    return blockchain.getContext(msg.label, msg.clientargs, clientIdx).then((context) => {
+    return blockchain.registerBlockProcessing(clientIdx).then(()=>{
+        return blockchain.getContext(msg.label, msg.clientargs, clientIdx);
+    }).then((context) => {
         if(typeof context === 'undefined') {
             context = {
                 engine : {
@@ -312,8 +313,9 @@ function doTest(msg) {
             return runFixedNumber(msg, cb, context);
         }
     }).then(() => {
+        return blockchain.unRegisterBlockProcessing();
+    }).then(() => {
         clearUpdateInter();
-        blockchain.unRegisterBlockProcessing();
         return cb.end();
     }).then(() => {
         let allStats = [];

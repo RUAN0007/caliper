@@ -52,12 +52,116 @@ class Quorum extends BlockchainInterface{
     }
 
     registerBlockProcessing(clientIdx, callback) {
-        console.log("Do nothing registration...");
-        // return Promise.resolve();
+        let idx = clientIdx % this.nodes_info.length;
+        let nodeUrl = this.nodes_info[idx].url;
+        let web3 = new Web3(new Web3.providers.HttpProvider(nodeUrl));
+        let blk_poll_interval = 1000; // poll block for every 1s
+        let self = this;
+        // console.log("Prepaer registraetion....");
+        // return web3.eth.getBlock('latest').then((blk)=>{
+        //     self.last_blk_num = parseInt(blk.number, 10);
+            // self.last_blk_hash = blk.hash;
+            // // console.log("At start blk num ", self.last_blk_num, " hash ", self.last_blk_hash);
+
+            // self.blk_poll_interval = setInterval(() => {
+            //     web3.eth.getBlock("latest").then((blk)=>{
+            //         let blk_num = parseInt(blk.number, 10);
+            //         let blk_hash = blk.hash;
+            //         let parent_hash = blk.parentHash;
+            //         let all_txns;
+
+            //         if (blk_num === self.last_blk_num) {
+            //             console.log("NO new block...");
+            //             return Promise.resolve([]);
+            //         } else {
+            //             let txns = blk.transactions;
+            //             all_txns = txns.splice(0);
+            //             let blk_idxs = [];
+            //             for (let blk_idx = blk_num - 1; 
+            //                 blk_idx > self.last_blk_num; blk_idx--) {
+            //                 blk_idxs.push(blk_idx);
+            //             }
+
+            //             return blk_idxs.reduce((prev, item)=>{
+            //                 return prev.then((hash)=>{
+            //                     return web3.eth.getBlock(hash);
+            //                 }).then((blk)=>{
+            //                     all_txns = all_txns.concat(blk.transactions);
+            //                     let parent_hash = blk.parentHash;
+            //                     return Promise.resolve(parent_hash);
+            //                 }).catch((err)=>{
+            //                     commUtils.log("Fail to get block with hash ", err);
+            //                     return Promise.reject("Fail to get block with number ", item);
+            //                 });
+            //             }, Promise.resolve(parent_hash)).then((parent_hash)=>{
+            //                 if (parent_hash === self.last_blk_hash) {
+            //                     self.last_blk_num = blk_num;
+            //                     self.last_blk_hash = blk_hash;
+            //                     return Promise.resolve(all_txns);
+            //                 } else {
+            //                     commUtils.log("Inconsistent Hash!!");
+            //                     return Promise.reject("Inconsistent Block Hash...");
+            //                 }
+            //             });
+            //         }
+            //     }).then((all_txns)=>{
+            //         // console.log("On-chain txns: ", all_txns);
+            //     }).catch((err)=>{
+            //         commUtils.log("Error in getting the latest block ", err);
+            //         return Promise.reject(err);
+            //     })
+
+
+
+
+
+
+        return web3.eth.getBlockNumber().then((blk_num)=>{
+            self.last_blk_num = blk_num;
+            self.blk_poll_interval = setInterval(() => {
+                web3.eth.getBlockNumber().then((latest_blk_num)=>{
+                    // console.log("Last: ", self.last_blk_num, " Latest: ", latest_blk_num);
+                    let poll_blk_promises = [];
+
+                    for (let blk_num = self.last_blk_num + 1;
+                        blk_num <= latest_blk_num; blk_num++) {
+                        // console.log("Blk Num: ", blk_num);
+                        poll_blk_promises.push(
+                            web3.eth.getBlock(blk_num).then((blk)=>{
+                                return Promise.resolve(blk.transactions);
+                            }).catch((err)=>{
+                                console.log("Error in getBlock()");
+                                return Promise.reject(err);
+                            })
+                        );
+                    }
+                    self.last_blk_num = latest_blk_num;
+                    return Promise.all(poll_blk_promises);
+                }).then((txns)=>{
+                    //txns is an array of array of txn hashes
+                    // We first compile them to a single array
+                    let valid_txns = [];
+                    let invalid_txns = [];  // In Quorum, all in-chain txns are valid. 
+                    txns.forEach((txn_array)=>{
+                        valid_txns = valid_txns.concat(txn_array);
+                    });
+                    // console.log("all on-chain txn: ", valid_txns);
+                    callback(valid_txns, invalid_txns);
+                }).catch((err)=>{
+                    commUtils.log("Error in web3.getBlockNumber or getBlock", err);
+                });
+            }, blk_poll_interval);
+            return Promise.resolve();
+        }).catch((err)=>{
+            console.log("Error in getting the start block number", err);
+            return Promise.reject(err);
+        })
     }
 
     unRegisterBlockProcessing() {
-        // return Promise.resolve();
+        // do nothing
+        clearInterval(this.poll_interval);
+        return Promise.resolve();
     }
 
 
@@ -134,23 +238,29 @@ class Quorum extends BlockchainInterface{
 
     sendTxn(contractInstance, funcName, args, from_acc) {
         let self = this;
+        let txStatus = new TxStatus();
         return new Promise((resolve, reject) => {
             // console.log("Issued txn with function ", functionName, " and args ", args[0], args[1]);
-            // let before = Date.now();
             contractInstance.methods[funcName](
                 ...args
             ).send({
                 from: from_acc,
                 gas: 1500000,
                 privateFor: self.private? self.privateFor:undefined
-            }).once('transactionHash', function(hash){
-                let txStatus = new TxStatus(hash);
-
-                txStatus.Set('time_commit()', Date.now());
-                txStatus.SetStatusSuccess();
-                txStatus.SetVerification(true);
-
+///////////////////////////////////////////////////////////////
+// Check blocks for txn status
+            }).once('transactionHash', (hash) => {
+                txStatus.SetID(hash);
                 resolve(txStatus);
+///////////////////////////////////////////////////////////////
+// Check txn receipt for status
+            // }).once('receipt', (receipt) => {
+            //     txStatus.SetID(receipt.transactionHash);
+            //     txStatus.SetStatusSuccess();
+            //     txStatus.SetVerification(true);
+
+            //     resolve(txStatus);
+///////////////////////////////////////////////////////////////
             });
         });
     }

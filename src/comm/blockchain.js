@@ -86,7 +86,7 @@ class Blockchain {
 
         let self = this;
 
-        this.bcObj.registerBlockProcessing(clientIdx, function (valid_txnIds, invalid_txnIds) {
+        return this.bcObj.registerBlockProcessing(clientIdx, function (valid_txnIds, invalid_txnIds) {
 
             let blk_time = Date.now();
 
@@ -140,7 +140,7 @@ class Blockchain {
 
     unRegisterBlockProcessing() {
         console.log("Unregistered Block processing...");
-        this.bcObj.unRegisterBlockProcessing();
+        return this.bcObj.unRegisterBlockProcessing();
     }
 
     /**
