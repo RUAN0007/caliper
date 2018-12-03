@@ -1,0 +1,34 @@
+{
+   "blockchain": {
+        "type": "quorum"
+  },
+  "command" : {
+    "start": "sleep 1",
+    "end" : "sleep 5"
+  },
+  "contracts": [{"name": "ycsb", "path": "src/contract/quorum/ycsb.sol"}],
+  "test": {
+    "name": "ycsb",
+    "description" : "This is ycsb benchmark for caliper",
+    "clients": {
+      "type": "local",
+      "number": 2
+    },
+    "rounds": [
+      {
+        "label" : "insert",
+        "txNumber" : [5000],
+        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 200}}],
+        "arguments": {"txnPerBatch":50, "fieldCount": 10, "fieldLength": 15, "orderedInserts": 1},
+        "callback" : "benchmark/ycsb/insert.js"
+      }
+      , 
+      { "label" : "txn",
+        "txNumber" : [100],
+        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 50}}],
+        "arguments": {"txnPerBatch":10, "distribution": "zipf", "zipf_s": 0.2, "recordCount": 50, "readRatio": 1.0, "updateRatio": 0.0, "insertRatio": 0.0, "deleteRatio": 0.0, "modifyRatio": 0.0},
+        "callback" : "benchmark/ycsb/txn.js"
+      }
+    ]
+  }
+}
