@@ -8,12 +8,12 @@
 
 'use strict';
 
+const TxStatus  = require('../comm/transaction');
 const fs = require('fs');
 const Web3 = require('web3');
 const solc = require('solc');
 const BlockchainInterface = require('../comm/blockchain-interface.js');
 const commUtils = require('../comm/util');
-const TxStatus = require('../comm/transaction');
 
 /**
  * Implements {BlockchainInterface} for a Quorum backend.
@@ -37,6 +37,7 @@ class Quorum extends BlockchainInterface{
             });
             // console.log("PrivateFor: ", this.privateFor);
         } else {
+            console.log("Not Private...");
             this.private = false;
         }
     }
@@ -51,11 +52,12 @@ class Quorum extends BlockchainInterface{
     }
 
     registerBlockProcessing(clientIdx, callback) {
-        return Promise.reject("Not Implemented it");
+        console.log("Do nothing registration...");
+        // return Promise.resolve();
     }
 
     unRegisterBlockProcessing() {
-        return Promise.reject("Not Implemented it");
+        // return Promise.resolve();
     }
 
 
@@ -64,48 +66,40 @@ class Quorum extends BlockchainInterface{
      * @return {Promise} The return promise.
      */
     installSmartContract(contracts_config) {
-	    return new Promise((resolve, reject) => {
-            // Assume there is only one contract
-            let contract_config = contracts_config[0];
-            let contract_name = contract_config.name;
-            let contract_path = commUtils.resolvePath(contract_config.path);
+        let bc = this;
+        let contract_config = contracts_config[0];
+        let contract_name = contract_config.name;
+        let contract_path = commUtils.resolvePath(contract_config.path);
 
-            // Use the first node
-            const nodeUrl = this.nodes_info[0].url;
-            const web3 = new Web3(new Web3.providers.HttpProvider(nodeUrl));
-            if (!web3.isConnected()) {
-                reject(new Error("Fail to connect to endpoint " + nodeUrl));
-            }
-            // compute the abi, bytecode using solc.
-            const input = fs.readFileSync(contract_path);
-            const output = solc.compile(input.toString(), 1); // convert buffer to string and compile
-            const bytecode = '0x' + output.contracts[':' + contract_name].bytecode;
-            const abi = JSON.parse(output.contracts[':' + contract_name].interface); // parse ABI
-            const contractInstance =  web3.eth.contract(abi);
-            contractInstance.new([], {
-                from: web3.eth.accounts[0],
-                data: bytecode,
-                gas: 0x47b760, // Minimum gas to deploy contracts
-                privateFor: (this.private ? this.privateFor : undefined)
-            }, (err, contract) => {
-                if (err) {
-                    commUtils.log('err creating contract' + contract_name + err);
-                    reject(err);
-                } else {
-                    if (contract.address) {
-                        commUtils.log('Contract mined! Address: ' + contract.address);
-                        reject(new Error("Successfully mined the quorum contract"));
-                        // resolve([contract.address, abi]);
-                    } else {
-                        commUtils.log('Contract transaction send: TransactionHash: ' + contract.transactionHash + ' waiting to be mined...');
-                    }
-                }
-            }
-            );
+        // Use the first node
+        const nodeUrl = this.nodes_info[0].url;
+        const web3 = new Web3(new Web3.providers.HttpProvider(nodeUrl));
+        // compute the abi, bytecode using solc.
+        const input = fs.readFileSync(contract_path);
+        const output = solc.compile(input.toString(), 1); // convert buffer to string and compile
+        const bytecode = '0x' + output.contracts[':' + contract_name].bytecode;
+        const abi = JSON.parse(output.contracts[':' + contract_name].interface);
+        // console.log("Generated ABI: ", abi_str);
 
-        }).catch((err) => {
-            commUtils.log('quorum.installSmartContract() failed, ' + (err.stack ? err.stack : err));
-            return Promise.reject(err);
+        return web3.eth.getAccounts()
+            .then((accounts)=>{
+                let from_acc = accounts[0];
+                let contractInstance = new web3.eth.Contract(abi);
+                return  new Promise((resolve, reject) => {
+                    contractInstance.deploy({
+                        data: bytecode
+                    }).send({
+                        from: from_acc,
+                        gas: 1500000,
+                        privateFor: bc.private? bc.privateFor:undefined
+                    }).once('receipt', function(receipt){
+                        let addr = receipt.contractAddress.toString();
+                        console.log("Receive contract addr in txn receipt ", addr);
+
+                        return resolve([addr, abi]);
+                    });
+                });
+                
         });
     }
 
@@ -116,6 +110,49 @@ class Quorum extends BlockchainInterface{
      * @return {object} The assembled Quorum context.
      */
     getContext(name, args, clientIdx) {
+        // return Promise.resolve();
+        let self = this;
+        return new Promise((resolve, reject)=>{
+            let web3s = [];
+            let my_web3; // endpoint to issue txn
+
+            self.nodes_info.forEach((node_info, idx)=> {
+
+                let node_url = node_info.url;
+                const web3 = new Web3(new Web3.providers.HttpProvider(node_url));
+
+                if (clientIdx % this.nodes_info.length === idx) {
+                    // console.log("Issued URL: ", node_url);
+                    my_web3 = web3; 
+                }
+                web3s.push(web3); 
+            });
+
+            resolve({web3s: web3s, my_web3: my_web3});
+        });
+    }
+
+    sendTxn(contractInstance, funcName, args, from_acc) {
+        let self = this;
+        return new Promise((resolve, reject) => {
+            // console.log("Issued txn with function ", functionName, " and args ", args[0], args[1]);
+            // let before = Date.now();
+            contractInstance.methods[funcName](
+                ...args
+            ).send({
+                from: from_acc,
+                gas: 1500000,
+                privateFor: self.private? self.privateFor:undefined
+            }).once('transactionHash', function(hash){
+                let txStatus = new TxStatus(hash);
+
+                txStatus.Set('time_commit()', Date.now());
+                txStatus.SetStatusSuccess();
+                txStatus.SetVerification(true);
+
+                resolve(txStatus);
+            });
+        });
     }
 
     /**
@@ -138,32 +175,43 @@ class Quorum extends BlockchainInterface{
      * @return {Promise<object>} The promise for the result of the execution.
      */
     invokeSmartContract(context, contractID, contractVer, args, timeout) {
-        let promises = [];
-        args.forEach((item, index)=>{
-            try {
-                let simpleArgs = [];
-                let func;
-                for(let key in item) {
-                    if(key === 'transaction_type') {
-                        func = item[key].toString();
+        const web3 = context.my_web3;
+        // let node_url = this.nodes_info[context.clientIdx % this.nodes_info.length].url;
+        // const web3 = new Web3(new Web3.providers.HttpProvider(node_url));
+        let address = contractID[0];
+        let abi = contractID[1];
+
+        // let contractInstance = web3.eth.contract(abi).at(address);
+        let contractInstance = new web3.eth.Contract(abi, address);
+        let self = this;
+
+        return web3.eth.getAccounts()
+            .then((accounts)=>{
+                let promises = [];
+                let from_acc = accounts[0];
+                args.forEach((item, index)=>{
+                    // let bef = Date.now();
+                    try {
+                        let simpleArgs = [];
+                        let func;
+                        for(let key in item) {
+                            if(key === 'transaction_type') {
+                                func = item[key].toString();
+                            }
+                            else {
+                                simpleArgs.push(item[key].toString());
+                            }
+                        }
+                        promises.push(self.sendTxn(contractInstance, func, simpleArgs, from_acc));
+                    } catch(err) {
+                        let badResult = new TxStatus('artifact');
+                        badResult.SetStatusFail();
+                        badResult.SetVerification(true);
+                        promises.push(Promise.resolve(badResult));
                     }
-                    else {
-                        simpleArgs.push(item[key].toString());
-                    }
-                }
-                if(func) {
-                    simpleArgs.splice(0, 0, func);
-                }
-                promises.push(Promise.resolve());
-            }
-            catch(err) {
-                commUtils.log(err);
-                let badResult = new TxStatus('artifact');
-                badResult.SetStatusFail();
-                promises.push(Promise.resolve(badResult));
-            }
-        });
-        return Promise.all(promises);
+                });
+                return Promise.all(promises);
+            });
     }
 
     /**
@@ -175,8 +223,38 @@ class Quorum extends BlockchainInterface{
      * @return {Promise<object>} The promise for the result of the execution.
      */
     queryState(context, contractID, contractVer, key) {
-        // TODO: change string key to general object
-        return Promise.resolve();
+        let address = contractID[0];
+        let abi = contractID[1];
+
+        let promises = [];
+        let self = this;
+        let func = "get";  // Assume each quorum contract has a function named as 'get'
+        let txStatus = new TxStatus("00000000000");
+
+        context.web3s.forEach((web3, idx)=>{
+            let query_promise = web3.eth.getAccounts().then((accounts)=>{
+                let from_acc = accounts[0];
+                let contractInstance = new web3.eth.Contract(abi, address);
+                let endpoint = self.nodes_info[idx].url;
+
+                return contractInstance.methods[func](key).call({from: from_acc});
+            });
+                // return self.callMethod(contractInstance, func, [key], from_acc, endpoint); });
+
+            promises.push(query_promise);
+        });
+        // console.log("Promise len: ", promises.length);
+        // Resolve only all nodes reply
+        return Promise.all(promises).then((results)=>{
+            txStatus.SetStatusSuccess();
+            txStatus.SetResult(results[0]);
+            // console.log("Query Result: ", results[0]);
+            txStatus.SetVerification(true);
+            return Promise.resolve(txStatus);
+        }).catch( (err) => {
+            commUtils.log("Fail to query on key ", key);
+            return Promise.reject(err);
+        });
     }
 }
 module.exports = Quorum;

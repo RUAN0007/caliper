@@ -10,4 +10,17 @@ contract ycsb {
   function set(string key, string value) {
     store[key] = value;
   }
+  function insert(string key, string value) {
+    store[key] = value;
+  }
+  function update(string key, string value) {
+    store[key] = value;
+  }
+  function remove(string key, string value) {
+    delete store[key];
+  }
+  function readmodifywrite(string key, string value) {
+    string old_val = store[key];
+    store[key] = value;
+  }
 }
