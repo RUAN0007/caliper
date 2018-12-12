@@ -51,7 +51,7 @@ def main():
             element['pub_key'] = pub_key
         setup_json['quorum']['network'].append(element)
     
-    with open(setup_path, 'w') as f:
+    with open(setup_path, 'w+') as f:
         json.dump(setup_json, f, indent=2)
     
     print "Finish preparing the network setup file..."

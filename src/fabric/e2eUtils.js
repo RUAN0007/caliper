@@ -960,4 +960,4 @@ function readAllFiles(dir) {
     });
     return certs;
 }
-module.exports.readAllFiles = readAllFile
+module.exports.readAllFiles = readAllFiles;
