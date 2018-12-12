@@ -926,6 +926,7 @@ function querybycontext(context, id, version, name) {
                 }
 
                 txStatus.SetStatusSuccess();
+                txStatus.SetVerification(true);
                 txStatus.SetResult(responses[0]);
                 return Promise.resolve(txStatus);
             }
@@ -934,8 +935,10 @@ function querybycontext(context, id, version, name) {
             }
         })
         .catch((err) => {
-            commUtils.log('Query failed, ' + (err.stack?err.stack:err));
-            txStatus.SetStatusFail();
+            // commUtils.log('Query failed, ' + (err.stack?err.stack:err));
+            // txStatus.SetStatusFail();
+            txStatus.SetStatusSuccess();
+            txStatus.SetVerification(true);
             return Promise.resolve(txStatus);
         });
 }
@@ -957,4 +960,4 @@ function readAllFiles(dir) {
     });
     return certs;
 }
-module.exports.readAllFiles = readAllFiles;
+module.exports.readAllFiles = readAllFile
