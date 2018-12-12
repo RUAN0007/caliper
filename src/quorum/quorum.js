@@ -128,6 +128,9 @@ class Quorum extends BlockchainInterface{
                         // console.log("Blk Num: ", blk_num);
                         poll_blk_promises.push(
                             web3.eth.getBlock(blk_num).then((blk)=>{
+                                // console.log("Gas Limit in Blk: ", blk.gasLimit);
+                                // console.log("Gas used in Blk: ", blk.gasUsed);
+                                // console.log("Transaction Count in Blk: ", blk.transactions.length);
                                 return Promise.resolve(blk.transactions);
                             }).catch((err)=>{
                                 console.log("Error in getBlock()");

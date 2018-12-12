@@ -87,7 +87,7 @@ function printTable(value) {
  */
 function getResultTitle() {
     // temporarily remove percentile return ['Name', 'Succ', 'Fail', 'Send Rate', 'Max Latency', 'Min Latency', 'Avg Latency', '75%ile Latency', 'Throughput'];
-    return ['Name', 'Operation', 'Succ', 'Fail', 'Send Rate', 'Max Latency', 'Min Latency', 'Avg Latency', 'Throughput'];
+    return ['Name', 'Operation', 'Succ', 'Fail', 'Send Rate', 'Max Latency', 'Min Latency', '95%ile Latency', '99%ile Latency', 'Avg Latency', 'Throughput'];
 }
 
 function getDetailedDelayTitle() {
@@ -126,17 +126,16 @@ function getResultValue(r) {
         (r.create.max === r.create.min) ? row.push((r.succ + r.fail) + ' tps') : row.push(((r.succ + r.fail) / (r.create.max - r.create.min)).toFixed(0) + ' tps');
         row.push(r.delay.max.toFixed(2) + ' s');
         row.push(r.delay.min.toFixed(2) + ' s');
-        row.push((r.delay.sum / r.succ).toFixed(2) + ' s');
-        // temporarily remove percentile
-        /*if(r.delay.detail.length === 0) {
+
+        if(r.delay.detail.length === 0) {
             row.push('N/A');
+        } else{
+            r.delay.detail.sort(function(a, b) { return a-b; });
+            row.push(r.delay.detail[Math.floor(r.delay.detail.length * 0.95)].toFixed(2) + ' s');
+            row.push(r.delay.detail[Math.floor(r.delay.detail.length * 0.99)].toFixed(2) + ' s');
         }
-        else{
-            r.delay.detail.sort(function(a, b) {
-                return a-b;
-            });
-            row.push(r.delay.detail[Math.floor(r.delay.detail.length * 0.75)].toFixed(2) + ' s');
-        }*/
+
+        row.push((r.delay.sum / r.succ).toFixed(2) + ' s');
 
         (r.final.max === r.final.min) ? row.push(r.succ + ' tps') : row.push(((r.succ / (r.final.max - r.create.min)).toFixed(0)) + ' tps');
     }

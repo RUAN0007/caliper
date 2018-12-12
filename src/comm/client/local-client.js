@@ -58,7 +58,7 @@ function txUpdate() {
     if (newQueryTxnStatuses.length === 0) {
         newQueryStats = bc.createNullDefaultTxStats();
     } else {
-        newQueryStats = blockchain.getDefaultTxStats(newQueryTxnStatuses, false);
+        newQueryStats = blockchain.getDefaultTxStats(newQueryTxnStatuses, true);
     }
 
     let newInvokeStats;
@@ -67,7 +67,7 @@ function txUpdate() {
         newInvokeStats = bc.createNullDefaultTxStats();
         newDetailedDelayStats = bc.createNullDetailedDelayStats();
     } else {
-        newInvokeStats = blockchain.getDefaultTxStats(newInvokeTxnStatuses, false);
+        newInvokeStats = blockchain.getDefaultTxStats(newInvokeTxnStatuses, true);
         newDetailedDelayStats = blockchain.getDetailedDelayStats(newInvokeTxnStatuses, false)
     }
 
@@ -75,9 +75,8 @@ function txUpdate() {
     let newStats;
     if(newResults.length === 0) {
         newStats = bc.createNullDefaultTxStats();
-    }
-    else {
-        newStats = blockchain.getDefaultTxStats(newResults, false);
+    } else {
+        newStats = blockchain.getDefaultTxStats(newResults, true);
     }
     process.send({type: 'txUpdated', data: {submitted: newNum, committed: newStats}});
 
