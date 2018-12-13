@@ -65,6 +65,11 @@ let RateControl = class {
             this.controller = new AdaptiveRateController(blockchain, rateControl.opts);
             break;
         }
+        case 'equil-rate': {
+            const EquilRateController = require('./equilRate.js');
+            this.controller = new EquilRateController(blockchain, rateControl.opts);
+            break;
+        }
         default:
             throw new Error('Unknown rate control type ' + rateControl.type);
         }

@@ -23,7 +23,7 @@ let Sleep = require('../util').sleep;
  * but when too many transactions are unfinished, it will sleep a period
  * of time.
  */
-class AdaptiveRateController extends RateInterface{
+class EquilRateController extends RateInterface{
     /**
      * Constructor
      * @param {Object} blockchain the blockchain under test
@@ -40,23 +40,17 @@ class AdaptiveRateController extends RateInterface{
      */
     init(msg) {
         const tps = this.options.initial_tps;
+        const tps_incr = this.options.tps_incr; // tps incremental per sec
+        const max_backlog_txn = this.options.backlog;
+
         const tpsPerClient = msg.totalClients ? (tps / msg.totalClients) : tps;
         this.cur_tps = tpsPerClient;
 
+        const tpsIncrPerClient = msg.totalClients ? (tps_incr / msg.totalClients) : tps;
+        this.tps_incr = tpsIncrPerClient;
 
-        this.min_backlog_txn = msg.totalClients ? 
-                                this.options.min_backlog_txn / msg.totalClients:
-                                this.options.min_backlog_txn;
+        this.backLogPerClient = msg.totalClients ? (max_backlog_txn / msg.totalClients) : max_backlog_txn;
 
-        this.max_backlog_txn = msg.totalClients ? 
-                                this.options.max_backlog_txn / msg.totalClients:
-                                this.options.max_backlog_txn;
-    
-        this.adaptive_rate = this.options.adaptive_rate ? 
-                             this.options.adaptive_rate: 0.9;
-
-        this.max_tps = this.options.max_tps ? this.options.max_tps / msg.totalClients : 0;
-        
         this.total_sleep_time = 0;
         this.last_idx = 0;
     }
@@ -70,22 +64,20 @@ class AdaptiveRateController extends RateInterface{
     * @return {promise} the return promise
     */
     async applyRateControl(start, idx, currentResults, resultStats) {
-        if (resultStats && resultStats.length > 0) {
-            let stats = resultStats[0];
-            let unfinished = idx - (stats.succ + stats.fail);
-
-            if (this.min_backlog_txn < this.unfinished_per_client) {
-                this.cur_tps /= this.adaptive_rate;
-            } else if (this.max_backlog_txn < unfinished) {
-                this.cur_tps *= this.adaptive_rate;
-            }
-        }
-
-        if (this.max_tps > 0 && this.max_tps < this.cur_tps) {
-            this.cur_tps = this.max_tps;
-        }
-
-
+        if (!this.equil) {
+            if (resultStats && resultStats.length > 0) {
+                let stats = resultStats[0];
+                // if (this.interval * 1000 < Date.now() - this.last_checkpoint) {
+                let unfinished = idx - (stats.succ + stats.fail);
+                let with20s = ((Date.now() - start) < 20000);
+                if (!with20s && this.backLogPerClient < unfinished) {
+                    this.equil = true;
+                    console.log("Reach Equilibrium at tps: ", this.cur_tps);
+                } else {
+                    this.cur_tps += this.tps_incr * ((Date.now() - start) / 1000)
+                }
+            }  // end if result
+        }  // end if this.equil
         let sleepTime = 1000 / this.cur_tps;
 
         if(sleepTime === 0) {
@@ -104,4 +96,4 @@ class AdaptiveRateController extends RateInterface{
     }
 }
 
-module.exports = AdaptiveRateController;
+module.exports = EquilRateController;
