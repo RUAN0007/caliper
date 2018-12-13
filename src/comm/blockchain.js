@@ -8,6 +8,7 @@
 'use strict';
 
 var process = require('process');
+const TxStatus  = require('../comm/transaction');
 
 /**
  * BlockChain class, define operations to interact with the blockchain system under test
@@ -243,7 +244,7 @@ class Blockchain {
                             }
                         });
                         resolve(tx_statuses);
-                    }, 40 * 1000); // 40s to time out
+                    }, 30 * 1000); // 30s to time outgg
                     // Resolve will be called during block processing. 
                     self.txn_batches.push([tx_statuses, resolve, resolve_timeout]);
                 }
@@ -262,8 +263,37 @@ class Blockchain {
      */
     queryState(context, contractID, contractVer, key) {
         context.engine.submitCallback(1);
+
+        return new Promise((resolve, reject)=>{
+            let resolve_timeout = setTimeout(() => {
+                let txn_status = new TxStatus("0000000000");
+                txn_status.Set('operation', 'query');
+                txn_status.SetStatusFail();
+                txn_status.SetVerification(true);
+                console.log('Time out blockchain query txn (30s)...');
+                resolve(txn_status);
+            }, 30 * 1000); // 30s to time out
+
+            this.bcObj.queryState(context, contractID, contractVer, key).then((txStatus)=>{
+                txStatus.Set('operation', 'query');
+                clearTimeout(resolve_timeout);
+                resolve(txStatus);
+            })
+        });
+
+
+
+        let resolve_timeout = setTimeout(() => {
+            let txn_status = new TxStatus("0000000000");
+            txn_status.SetStatusFail();
+            txn_status.SetVerification(true);
+            console.log('Time out blockchain query txn (30s)...');
+            return Promise.resolve(txn_status);
+        }, 30 * 1000); // 30s to time out
+
         return this.bcObj.queryState(context, contractID, contractVer, key)
             .then((txStatus)=>{
+                clearTimeout(resolve_timeout);
                 txStatus.Set('operation', 'query');
                 return Promise.resolve(txStatus);
             });
