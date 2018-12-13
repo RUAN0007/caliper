@@ -84,12 +84,12 @@ function demoAddLatency(max, min, avg) {
 }
 
 function demoRefreshData(updates) {
+    var sub = 0, suc = 0, fail = 0;
     if(updates.length  === 0) {
         demoAddThroughput(0,0,0);
         demoAddLatency(0,0,0);
     }
     else {
-        var sub = 0, suc = 0, fail = 0;
         var deMax = -1, deMin = -1, deAvg = 0;
         for(let i = 0 ; i < updates.length ; i++) {
             let data = updates[i];
@@ -125,7 +125,13 @@ function demoRefreshData(updates) {
         console.log('[Transaction Info] - Submitted: ' + demoData.summary.txSub
         + ' Succ: ' + demoData.summary.txSucc
         + ' Fail:' +  demoData.summary.txFail
-        + ' Unfinished:' + (demoData.summary.txSub - demoData.summary.txSucc - demoData.summary.txFail));
+        + ' Unfinished:' + (demoData.summary.txSub - demoData.summary.txSucc - demoData.summary.txFail)
+        + ' ('
+        + ' submited: ' +  sub
+        + ' commited: ' +  (suc + fail)
+        + ' succ: ' +  suc
+        + ' failed: ' +  fail
+        + ')');
    // }
 
     var fs = require('fs');
