@@ -1,7 +1,7 @@
 QUO_HOME=/users/ruanpc/caliper/network/quorum
 HOSTS=$QUO_HOME/hosts
 # ADDRESSES=$QUO_HOME/addresses
-QUO_DATA=$QUO_HOME/qdata
+QUO_DATA=/data/ruanpc/qdata
 
 LOG_DIR=/data/ruanpc/quorum_logs
 

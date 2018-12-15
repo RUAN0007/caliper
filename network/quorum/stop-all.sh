@@ -13,5 +13,6 @@ for host in `cat $HOSTS`; do
   let i=$i+1
 done
 
-echo "[*] Cleaning up temporary data directories"
+# echo "[**] Cleaning up temporary data directories"
 rm -rf $QUO_DATA
+# rm -rf ~/.eth*

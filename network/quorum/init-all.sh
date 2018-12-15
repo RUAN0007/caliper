@@ -5,7 +5,7 @@ cd `dirname ${BASH_SOURCE-$0}`
 
 echo "[*] init-all"
 mkdir -p $LOG_DIR
-
+mkdir -p ${QUO_DATA}
 i=0
 for host in `cat $HOSTS`; do
   if [[ $i -lt $1 ]]; then
