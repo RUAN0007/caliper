@@ -117,8 +117,15 @@ class Blockchain {
                 for (let j=0; j < txn_statuses.length; j++) {
                     let txn_status = txn_statuses[j];
                     if (!txn_status.IsVerified() ) {
-                        all_finished = false;
-                        break;
+                        // 30s Time out a txn 
+                        if (Date.now() - txn_status.GetTimeCreate() > 30 * 1000) {
+                            txn_status.SetVerification(true);
+                            txn_status.SetStatusFail();
+                            delete self.unconfirmed_txn_map[txn_status.GetID()];
+                            console.log('Time out txn [' + txn_status.GetID().substring(0, 5) + '...]');
+                        } else {
+                            all_finished = false;
+                        }
                     }
                 }
                 if (all_finished) {
@@ -132,8 +139,8 @@ class Blockchain {
                 let finished_batch = self.txn_batches.splice(remove_idx, 1)[0];
                 let txn_statuses = finished_batch[0];
                 let resolve_func = finished_batch[1];
-                let resolve_timeout = finished_batch[2];
-                clearTimeout(resolve_timeout);
+                // let resolve_timeout = finished_batch[2];
+                // clearTimeout(resolve_timeout);
                 resolve_func(txn_statuses);
             }
         });
@@ -141,6 +148,7 @@ class Blockchain {
 
     unRegisterBlockProcessing() {
         console.log("Unregistered Block processing...");
+        clearTimeout(this.round_timeout);
         return this.bcObj.unRegisterBlockProcessing();
     }
 
@@ -234,19 +242,20 @@ class Blockchain {
                 if (allConfirmed) {
                     resolve(tx_statuses);
                 } else {
-                    let resolve_timeout = setTimeout(() => {
-                        tx_statuses.forEach(txn_status => {
-                            if (!txn_status.IsVerified()) {
-                                let txn_id = txn_status.GetID();
-                                txn_status.SetStatusFail();
-                                txn_status.SetVerification(true);
-                                console.log('Time out txn [' + txn_id.substring(0, 5) + '...]:');
-                            }
-                        });
-                        resolve(tx_statuses);
-                    }, 30 * 1000); // 30s to time outgg
+                    // let resolve_timeout = setTimeout(() => {
+                    //     tx_statuses.forEach(txn_status => {
+                    //         if (!txn_status.IsVerified()) {
+                    //             let txn_id = txn_status.GetID();
+                    //             txn_status.SetStatusFail();
+                    //             txn_status.SetVerification(true);
+                    //             console.log('Time out txn [' + txn_id.substring(0, 5) + '...]:');
+                    //         }
+                    //     });
+                    //     resolve(tx_statuses);
+                    // }, 30 * 1000); // 30s to time outgg
                     // Resolve will be called during block processing. 
-                    self.txn_batches.push([tx_statuses, resolve, resolve_timeout]);
+                    // self.txn_batches.push([tx_statuses, resolve, resolve_timeout]);
+                    self.txn_batches.push([tx_statuses, resolve]);
                 }
             });
 
@@ -510,7 +519,7 @@ class Blockchain {
         }
         for(let i = 0 ; i < results.length ; i++) {
             let result = results[i];
-            if(!result.hasOwnProperty('succ') || result.succ === 0) {
+            if(result === undefined || !result.hasOwnProperty('succ') || result.succ === 0) {
                 skip++;
             }
             else {
