@@ -99,10 +99,10 @@ function getDetailedDelayValue(r) {
     try {
         row.push(r.label);
         row.push(r.succ);
-        row.push((r.s2e_sum / r.succ).toFixed(2) + ' s');
-        row.push((r.e2o_sum / r.succ).toFixed(2) + ' s');
-        row.push((r.o2f_sum / r.succ).toFixed(2) + ' s');
-        row.push((r.delay_sum / r.succ).toFixed(2) + ' s');
+        row.push((r.s2e_sum / r.succ).toFixed(3) + ' s');
+        row.push((r.e2o_sum / r.succ).toFixed(3) + ' s');
+        row.push((r.o2f_sum / r.succ).toFixed(3) + ' s');
+        row.push((r.delay_sum / r.succ).toFixed(3) + ' s');
     }
     catch (err) {
         row = [r.label, 0, 'N/A', 'N/A', 'N/A', 'N/A'];
@@ -123,21 +123,21 @@ function getResultValue(r) {
         row.push(r.operation);
         row.push(r.succ);
         row.push(r.fail);
-        (r.create.max === r.create.min) ? row.push((r.succ + r.fail) + ' tps') : row.push(((r.succ + r.fail) / (r.create.max - r.create.min)).toFixed(0) + ' tps');
-        row.push(r.delay.max.toFixed(2) + ' s');
-        row.push(r.delay.min.toFixed(2) + ' s');
+        (r.create.max === r.create.min) ? row.push((r.succ + r.fail) + ' tps') : row.push(((r.succ + r.fail) / (r.create.max - r.create.min)).toFixed(2) + ' tps');
+        row.push(r.delay.max.toFixed(3) + ' s');
+        row.push(r.delay.min.toFixed(3) + ' s');
 
         if(r.delay.detail.length === 0) {
             row.push('N/A');
         } else{
             r.delay.detail.sort(function(a, b) { return a-b; });
-            row.push(r.delay.detail[Math.floor(r.delay.detail.length * 0.95)].toFixed(2) + ' s');
-            row.push(r.delay.detail[Math.floor(r.delay.detail.length * 0.99)].toFixed(2) + ' s');
+            row.push(r.delay.detail[Math.floor(r.delay.detail.length * 0.95)].toFixed(3) + ' s');
+            row.push(r.delay.detail[Math.floor(r.delay.detail.length * 0.99)].toFixed(3) + ' s');
         }
 
-        row.push((r.delay.sum / r.succ).toFixed(2) + ' s');
+        row.push((r.delay.sum / r.succ).toFixed(3) + ' s');
 
-        (r.final.max === r.final.min) ? row.push(r.succ + ' tps') : row.push(((r.succ / (r.final.max - r.create.min)).toFixed(0)) + ' tps');
+        (r.final.max === r.final.min) ? row.push(r.succ + ' tps') : row.push(((r.succ / (r.final.max - r.create.min)).toFixed(2)) + ' tps');
     }
     catch (err) {
         // temporarily remove percentile row = [r.label, 0, 0, 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A'];
