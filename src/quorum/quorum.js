@@ -51,7 +51,7 @@ class Quorum extends BlockchainInterface{
         return Promise.resolve();
     }
 
-    registerBlockProcessing(clientIdx, callback) {
+    registerBlockProcessing(clientIdx, callback, err_cb) {
         let idx = clientIdx % this.nodes_info.length;
         let nodeUrl = this.nodes_info[idx].url;
         let web3 = new Web3(new Web3.providers.HttpProvider(nodeUrl));
@@ -152,6 +152,7 @@ class Quorum extends BlockchainInterface{
                     callback(valid_txns, invalid_txns);
                 }).catch((err)=>{
                     commUtils.log("Error in web3.getBlockNumber or getBlock", err);
+                    err_cb(err);
                 });
             }, blk_poll_interval);
             return Promise.resolve();

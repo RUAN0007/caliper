@@ -141,6 +141,7 @@ class Client{
         this.results = [];
         this.updates.data = [];
         this.updates.id++;
+        let self = this;
         switch(this.type) {
         case CLIENT_LOCAL:
             p = this._startLocalTest(message, clientArgs);
@@ -156,6 +157,7 @@ class Client{
         }).then(()=>{
             return Promise.resolve();
         }).catch((err)=>{
+            self.stop();
             return Promise.reject(err);
         });
     }

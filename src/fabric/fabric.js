@@ -46,7 +46,7 @@ class Fabric extends BlockchainInterface{
             });
     }
 
-    registerBlockProcessing(clientIdx, callback) {
+    registerBlockProcessing(clientIdx, callback, err_cb) {
         util.init(this.configPath);
         e2eUtils.init(this.configPath);
 

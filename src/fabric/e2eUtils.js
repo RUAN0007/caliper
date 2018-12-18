@@ -60,7 +60,7 @@ function unRegisterBlockProcessing() {
 }
 module.exports.unRegisterBlockProcessing = unRegisterBlockProcessing;
 
-function registerBlockProcessing(clientIdx, callback) {
+function registerBlockProcessing(clientIdx, callback, err_cb) {
     Client.setConfigSetting('request-timeout', 120000);
 
     let channel = testUtil.getDefaultChannel();
@@ -156,7 +156,7 @@ function registerBlockProcessing(clientIdx, callback) {
 
         }, (err) => {
             commUtils.log("Fail to register block event");
-            Promise.reject(err);
+            err_cb(err);
         },
             {unregister: false, disconnect: false}
         );

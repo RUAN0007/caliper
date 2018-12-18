@@ -326,7 +326,7 @@ function defaultTest(args, clientArgs, contractID, final) {
                 }).catch( (err) => {
                     demo.pauseWatch();
                     t.fail('failed \''  + testLabel + '\' testing, ' + (err.stack ? err.stack : err));
-                    return Promise.resolve();   // continue with next round ?
+                    return Promise.reject(err);   // Not allow to continue with next round
                 });
             });
         }, Promise.resolve()).then( () => {
@@ -436,7 +436,7 @@ module.exports.run = function(configFile, networkFile) {
                 end.stderr.pipe(process.stderr);
             }
             t.end();
-            process.exit();
+            process.exit(1);
         });
     });
 };

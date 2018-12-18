@@ -27,6 +27,7 @@ let txUpdateTime = 1000;
 let trimType = 0;
 let trim = 0;
 let startTime = 0;
+let round_timeout;
 
 /**
  * Calculate realtime transaction statistics and send the txUpdated message
@@ -286,7 +287,10 @@ function doTest(msg) {
         }
     };
 
-    return blockchain.registerBlockProcessing(clientIdx).then(()=>{
+    return blockchain.registerBlockProcessing(clientIdx, (err)=>{
+        clearUpdateInter();
+        process.send({type: 'error', data: err.toString()});
+    }).then(()=>{
         return blockchain.getContext(msg.label, msg.clientargs, clientIdx);
     }).then((context) => {
         if(typeof context === 'undefined') {
@@ -307,12 +311,16 @@ function doTest(msg) {
             context.op_numb = msg.numb;
             context.contractID = msg.contractID;
         }
+        // round_timeout = setTimeout(() => {
+        //     return blockchain.releaseContext();
+        // }, 4*3600*1000);  // End the test if above 4 hours
         if (msg.txDuration) {
             return runDuration(msg, cb, context);
         } else {
             return runFixedNumber(msg, cb, context);
         }
     }).then(() => {
+        // clearTimeout(round_timeout);
         return blockchain.unRegisterBlockProcessing();
     }).then(() => {
         clearUpdateInter();

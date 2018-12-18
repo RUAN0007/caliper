@@ -82,7 +82,7 @@ class Blockchain {
     }
 
     
-    registerBlockProcessing(clientIdx) {
+    registerBlockProcessing(clientIdx, err_cb) {
         console.log("Register for block processing...");
 
         let self = this;
@@ -143,12 +143,11 @@ class Blockchain {
                 // clearTimeout(resolve_timeout);
                 resolve_func(txn_statuses);
             }
-        });
+        }, err_cb);
     }
 
     unRegisterBlockProcessing() {
         console.log("Unregistered Block processing...");
-        clearTimeout(this.round_timeout);
         return this.bcObj.unRegisterBlockProcessing();
     }
 
