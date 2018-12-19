@@ -131,8 +131,9 @@ class Fabric extends BlockchainInterface{
                 for(let key in item) {
                     if(key === 'transaction_type') {
                         func = item[key].toString();
-                    }
-                    else {
+                    } else if (item[key] instanceof Array) {  // unroll the parameter if it is an array
+                        item[key].forEach((arg)=>{simpleArgs.push(arg.toString()); });
+                    } else {
                         simpleArgs.push(item[key].toString());
                     }
                 }

@@ -185,6 +185,7 @@ class Quorum extends BlockchainInterface{
         // compute the abi, bytecode using solc.
         const input = fs.readFileSync(contract_path);
         const output = solc.compile(input.toString(), 1); // convert buffer to string and compile
+        // console.log("Compiled Output: ", output);
         const bytecode = '0x' + output.contracts[':' + contract_name].bytecode;
         const abi = JSON.parse(output.contracts[':' + contract_name].interface);
         // console.log("Generated ABI: ", abi_str);
@@ -198,7 +199,7 @@ class Quorum extends BlockchainInterface{
                         data: bytecode
                     }).send({
                         from: from_acc,
-                        gas: 1500000,
+                        gas: 15000000,
                         privateFor: bc.private? bc.privateFor:undefined
                     }).once('receipt', function(receipt){
                         let addr = receipt.contractAddress.toString();
@@ -244,12 +245,12 @@ class Quorum extends BlockchainInterface{
         let self = this;
         let txStatus = new TxStatus();
         return new Promise((resolve, reject) => {
-            // console.log("Issued txn with function ", functionName, " and args ", args[0], args[1]);
+            console.log("Issued txn with function ", funcName, " and args ", args)
             contractInstance.methods[funcName](
                 ...args
             ).send({
                 from: from_acc,
-                gas: 1500000,
+                gas: 5000000,
                 privateFor: self.private? self.privateFor:undefined
 ///////////////////////////////////////////////////////////////
 // Check blocks for txn status
@@ -313,7 +314,7 @@ class Quorum extends BlockchainInterface{
                                 func = item[key].toString();
                             }
                             else {
-                                simpleArgs.push(item[key].toString());
+                                simpleArgs.push(item[key]);
                             }
                         }
                         promises.push(self.sendTxn(contractInstance, func, simpleArgs, from_acc));
