@@ -10,6 +10,7 @@ package main
 import (
 	"crypto/sha512"
 	"encoding/hex"
+	"strconv"
 	"fmt"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
@@ -45,10 +46,25 @@ func (t *YCSBChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 		return t.Delete(stub, args)
 	case "query":
 		return t.Read(stub, args)
+	case "upper":
+		return t.upper(stub, args)
+	// case "upper1":
+	// 	return t.upper(stub, args, 1)
+	// case "upper3":
+	// 	return t.upper(stub, args, 3)
+	// case "upper5":
+	// 	return t.upper(stub, args, 5)
+	// case "upper7":
+	// 	return t.upper(stub, args, 7)
+	// case "upper9":
+	// 	return t.upper(stub, args, 9)
+	// case "upper99":
+	// 	return t.upper(stub, args, 99)
 	default:
 		return errormsg(ERROR_UNKNOWN_FUNC + ": " + function)
 	}
 }
+
 
 func (t *YCSBChaincode) Insert(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 2 { //should be [key, concat of value]
@@ -118,13 +134,43 @@ func (t *YCSBChaincode) Read(stub shim.ChaincodeStubInterface, args []string) pb
 	}
 
 	valBytes, err := stub.GetState(args[0])
-	fmt.Printf("Read Key: %s with Value: %s\n", args[0], string(valBytes))
+	// fmt.Printf("Read Key: %s with Value: %s\n", args[0], string(valBytes))
 	if err != nil {
 		return systemerror(err.Error())
 	}
 
 	return shim.Success(valBytes)
 }
+
+func (t *YCSBChaincode) upper(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	arg_count, _ := strconv.Atoi(args[0])
+	for i := 1; i <= arg_count; i++ {
+		valBytes, _ := stub.GetState(args[i])
+		_ = stub.PutState(args[i], valBytes)
+	}
+	return shim.Success(nil)
+}
+
+// func (t *YCSBChaincode) Upper1(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+// 	return t.upper(stub, args, 1);
+// }
+
+// func (t *YCSBChaincode) Upper3(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+// 	return t.upper(stub, args, 3);
+// }
+
+// func (t *YCSBChaincode) Upper5(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+// 	return t.upper(stub, args, 5);
+// }
+
+// func (t *YCSBChaincode) Upper7(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+// 	return t.upper(stub, args, 7);
+// }
+
+// func (t *YCSBChaincode) Upper9(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+// 	return t.upper(stub, args, 9);
+// }
+
 
 func main() {
 	err := shim.Start(new(YCSBChaincode))
