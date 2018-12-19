@@ -86,11 +86,14 @@ class Blockchain {
         console.log("Register for block processing...");
 
         let self = this;
-
+        self.clientIdx = clientIdx;
+        self.txn_count = 0;
+        self.blk_count = 0;
         return this.bcObj.registerBlockProcessing(clientIdx, function (valid_txnIds, invalid_txnIds) {
-
             let blk_time = Date.now();
-
+            // Assume the size of two array reflects the number of txns in a block. 
+            self.txn_count += valid_txnIds.length + invalid_txnIds.length;
+            self.blk_count += 1;
             // Filter txns by map
             valid_txnIds.forEach(valid_txnId => {
                 if (self.unconfirmed_txn_map.hasOwnProperty(valid_txnId)) {
@@ -148,6 +151,9 @@ class Blockchain {
 
     unRegisterBlockProcessing() {
         console.log("Unregistered Block processing...");
+        if (this.clientIdx ===0 ) {
+            console.log("Avg # of Txns in Block: ", this.txn_count / this.blk_count);
+        }
         return this.bcObj.unRegisterBlockProcessing();
     }
 
