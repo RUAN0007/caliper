@@ -245,7 +245,7 @@ class Quorum extends BlockchainInterface{
         let self = this;
         let txStatus = new TxStatus();
         return new Promise((resolve, reject) => {
-            console.log("Issued txn with function ", funcName, " and args ", args)
+            // console.log("Issued txn with function ", funcName, " and args ", args)
             contractInstance.methods[funcName](
                 ...args
             ).send({

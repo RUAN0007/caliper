@@ -81,6 +81,24 @@ class Blockchain {
         return this.bcObj.prepareClients(number);
     }
 
+    finishIssueTxn() {
+        let self = this;
+        this.finish_timeout = setTimeout(()=>{
+            for(let i=0; i<self.txn_batches.length;i++) {
+                let txn_statuses = self.txn_batches[i][0];
+                let resolve_func = self.txn_batches[i][1];
+                for (let j=0; j < txn_statuses.length; j++) {
+                    let txn_status = txn_statuses[j];
+                    if (!txn_status.IsVerified() ) {
+                        txn_status.SetVerification(true);
+                        txn_status.SetStatusFail();
+                    }
+                }
+                resolve_func(txn_statuses);
+            }
+        }, 30*1000);  // Finish all pending txns in 30s
+    }
+
     
     registerBlockProcessing(clientIdx, err_cb) {
         console.log("Register for block processing...");
@@ -89,6 +107,8 @@ class Blockchain {
         self.clientIdx = clientIdx;
         self.txn_count = 0;
         self.blk_count = 0;
+
+
         return this.bcObj.registerBlockProcessing(clientIdx, function (valid_txnIds, invalid_txnIds) {
             let blk_time = Date.now();
             // Assume the size of two array reflects the number of txns in a block. 
@@ -154,6 +174,7 @@ class Blockchain {
         if (this.clientIdx ===0 ) {
             console.log("Avg # of Txns in Block: ", this.txn_count / this.blk_count);
         }
+        clearTimeout(this.finish_timeout);
         return this.bcObj.unRegisterBlockProcessing();
     }
 
