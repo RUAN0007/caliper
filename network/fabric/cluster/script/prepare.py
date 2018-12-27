@@ -17,7 +17,7 @@ def get_filepath_in_dir(dir_abspath):
   return os.path.join(dir_abspath, d[0])
 
 def main():
-  if len(sys.argv) <= 3:
+  if len(sys.argv) <= 2:
     print " Usage: <directory> <peer_node1> <peer_node2> ... "
     return
   directory_name = sys.argv[1]

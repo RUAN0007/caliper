@@ -46,7 +46,7 @@ class EquilRateController extends RateInterface{
         const tpsPerClient = msg.totalClients ? (tps / msg.totalClients) : tps;
         this.cur_tps = tpsPerClient;
 
-        const tpsIncrPerClient = msg.totalClients ? (tps_incr / msg.totalClients) : tps;
+        const tpsIncrPerClient = msg.totalClients ? (tps_incr / msg.totalClients) : tps_incr;
         this.tps_incr = tpsIncrPerClient;
 
         this.backLogPerClient = msg.totalClients ? (max_backlog_txn / msg.totalClients) : max_backlog_txn;

@@ -18,6 +18,7 @@ if [[ $2 == "-p" ]]; then
     fi
   done
 
+
   # echo "Waiting until all Tessera nodes are running..."
   # DOWN=true
   # k=10
@@ -53,7 +54,7 @@ if [[ $2 == "-p" ]]; then
 
   #     sleep 5
   # done
-  sleep 2
+  sleep 5
   echo "All Tessera nodes started"
 fi
 

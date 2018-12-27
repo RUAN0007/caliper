@@ -158,6 +158,7 @@ class Quorum extends BlockchainInterface{
             return Promise.resolve();
         }).catch((err)=>{
             console.log("Error in getting the start block number", err);
+            err_cb(err);
             return Promise.reject(err);
         })
     }
