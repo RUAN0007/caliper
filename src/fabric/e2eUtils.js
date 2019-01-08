@@ -38,10 +38,6 @@ let the_user = null;
 let blk_event_hub;
 let blk_registration;
 
-let sample_ratio = 0.1;
-let invalid_sample_count;
-let sample_count;
-
 /**
  * Initialize the Fabric client configuration.
  * @param {string} config_path The path of the Fabric network configuration file.
@@ -132,26 +128,17 @@ function registerBlockProcessing(clientIdx, callback, err_cb) {
             // commUtils.log("Received Block " + block.header.number + " with " + block.data.data.length + " transactions from Process " + process.pid);
             let valid_txnIds = [];
             let invalid_txnIds = [];
-            
-            // Use the sampled txns to infer the global ratio of valid txns. 
-            let invalid_ratio;
-            if (sample_count === 0) {
-              invalid_ratio = 0;
-            } else {
-              invalid_ratio = invalid_sample_count / sample_count;
-            }
-            // commUtils.log("Sampled Invalid Ratio: " + invalid_ratio);
 
+            let tx_filters = block.metadata.metadata[2]
+            
             for (var index = 0; index < block.data.data.length; index++) {
                 var channel_header = block.data.data[index].payload.header.channel_header;
-                if (Math.random() < invalid_ratio) {
-                    invalid_txnIds.push(channel_header.tx_id);
-                } else {
+                if (tx_filters[index] === 0) {
                     valid_txnIds.push(channel_header.tx_id);
+                } else {
+                    invalid_txnIds.push(channel_header.tx_id);
                 }
             }
-            invalid_sample_count = 0;
-            sample_count = 0;
             callback(valid_txnIds, invalid_txnIds);
 
         }, (err) => {
@@ -765,73 +752,6 @@ async function invokebycontext(context, id, version, args, timeout){
             proposalResponses: proposalResponses,
             proposal: proposal,
         };
-
-        // 10% to be sampled for txn status
-        if (Math.random() < sample_ratio) {
-            let sampleTimeout = 10 * 1000;  // 10s
-            let handle = setTimeout(function() {
-                commUtils.log("Time out for the sampled txn [" + txId.substring(0,5) + "]");
-            }, sampleTimeout);
-            let eh_idx = Math.floor(Math.random() * eventHubs.length);
-            let eh = eventHubs[eh_idx];
-
-            eh.registerTxEvent(txId,
-                (tx, code) => {
-                    clearTimeout(handle);
-                    eh.unregisterTxEvent(txId);
-
-                    if (code !== 'VALID') {
-                        commUtils.log("Invalid Sampled Txn " + txId.substring(0,5) + "] with error code " + code);
-                        invalid_sample_count += 1;
-                    }
-                    sample_count += 1;
-                },
-                (err) => {
-                    clearTimeout(handle);
-                    commUtils.log("Error event for the sampled txn [" + txId.substring(0,5) + "]", err.stack);
-                }
-            );
-        }
-        // let newTimeout = timeout * 1000 - (Date.now() - startTime);
-        // if(newTimeout < 10000) {
-        //     commUtils.log('WARNING: timeout is too small, default value is used instead');
-        //     newTimeout = 10000;
-        // }
-
-        // const eventPromises = [];
-        // eventHubs.forEach((eh) => {
-        //     eventPromises.push(new Promise((resolve, reject) => {
-        //         let handle = setTimeout(reject, newTimeout, new Error("Time out"));
-
-        //         eh.registerTxEvent(txId,
-        //             (tx, code) => {
-        //                 clearTimeout(handle);
-        //                 eh.unregisterTxEvent(txId);
-
-        //                 // either explicit invalid event or valid event, verified in both cases by at least one peer
-        //                 invokeStatus.SetVerification(true);
-        //                 if (code !== 'VALID') {
-        //                     let err = new Error('Invalid transaction: ' + code);
-        //                     errFlag |= TxErrorEnum.BadEventNotificationError;
-        //                     invokeStatus.SetFlag(errFlag);
-        //                     invokeStatus.SetErrMsg(TxErrorIndex.BadEventNotificationError, err.toString());
-        //                     reject(err); // handle error in final catch
-        //                 } else {
-        //                     resolve();
-        //                 }
-        //             },
-        //             (err) => {
-        //                 clearTimeout(handle);
-        //                 // we don't know what happened, but give the other eventhub connections a chance
-        //                 // to verify the Tx status, so resolve this call
-        //                 errFlag |= TxErrorEnum.EventNotificationError;
-        //                 invokeStatus.SetFlag(errFlag);
-        //                 invokeStatus.SetErrMsg(TxErrorIndex.EventNotificationError, err.toString());
-        //                 resolve();
-        //             }
-        //         );
-        //     }));
-        // });
 
         let broadcastResponse;
         try {
