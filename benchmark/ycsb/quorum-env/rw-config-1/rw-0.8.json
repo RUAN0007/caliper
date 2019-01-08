@@ -1,0 +1,69 @@
+{
+   "blockchain": {
+        "type": "quorum"
+  },
+  "command" : {
+    "start": "sleep 1",
+    "end" : "sleep 5"
+  },
+  "contracts": [{"name": "ycsb", "path": "src/contract/quorum/ycsb.sol"}],
+  "test": {
+    "name": "ycsb",
+    "description" : "This is ycsb benchmark for caliper",
+    "clients": {
+      "type": "local",
+      "number": 64
+    },
+    "rounds": [
+      {
+        "label" : "insert",
+        "txNumber" : [128000],
+        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 100}}],
+        "arguments": {"txnPerBatch":10, "fieldCount": 10, "fieldLength": 100},
+        "callback" : "benchmark/ycsb/insert.js"
+      }
+      , 
+      { "label" : "rw450",
+        "txNumber" : [64000],
+        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 450}}],
+        "arguments": {"txnPerBatch":10, "distribution": "zipf", "zipf_s": 0.99, "recordCount": 128000, "readRatio": 0.8, "updateRatio": 0.2, "insertRatio": 0.0, "deleteRatio": 0.0, "modifyRatio": 0.0},
+        "callback" : "benchmark/ycsb/txn.js"
+      }
+      , 
+      { "label" : "rw470",
+        "txNumber" : [64000],
+        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 470}}],
+        "arguments": {"txnPerBatch":10, "distribution": "zipf", "zipf_s": 0.99, "recordCount": 128000, "readRatio": 0.8, "updateRatio": 0.2, "insertRatio": 0.0, "deleteRatio": 0.0, "modifyRatio": 0.0},
+        "callback" : "benchmark/ycsb/txn.js"
+      }
+      , 
+      { "label" : "rw490",
+        "txNumber" : [64000],
+        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 490}}],
+        "arguments": {"txnPerBatch":10, "distribution": "zipf", "zipf_s": 0.99, "recordCount": 128000, "readRatio": 0.8, "updateRatio": 0.2, "insertRatio": 0.0, "deleteRatio": 0.0, "modifyRatio": 0.0},
+        "callback" : "benchmark/ycsb/txn.js"
+      }
+      , 
+      { "label" : "rw510",
+        "txNumber" : [64000],
+        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 510}}],
+        "arguments": {"txnPerBatch":10, "distribution": "zipf", "zipf_s": 0.99, "recordCount": 128000, "readRatio": 0.8, "updateRatio": 0.2, "insertRatio": 0.0, "deleteRatio": 0.0, "modifyRatio": 0.0},
+        "callback" : "benchmark/ycsb/txn.js"
+      }
+      , 
+      { "label" : "rw530",
+        "txNumber" : [64000],
+        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 530}}],
+        "arguments": {"txnPerBatch":10, "distribution": "zipf", "zipf_s": 0.99, "recordCount": 128000, "readRatio": 0.8, "updateRatio": 0.2, "insertRatio": 0.0, "deleteRatio": 0.0, "modifyRatio": 0.0},
+        "callback" : "benchmark/ycsb/txn.js"
+      }
+      , 
+      { "label" : "rw550",
+        "txNumber" : [64000],
+        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 550}}],
+        "arguments": {"txnPerBatch":10, "distribution": "zipf", "zipf_s": 0.99, "recordCount": 128000, "readRatio": 0.8, "updateRatio": 0.2, "insertRatio": 0.0, "deleteRatio": 0.0, "modifyRatio": 0.0},
+        "callback" : "benchmark/ycsb/txn.js"
+      }
+    ]
+  }
+}

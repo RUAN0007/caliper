@@ -1,0 +1,48 @@
+{
+   "blockchain": {
+        "type": "quorum"
+  },
+  "command" : {
+    "start": "sleep 1",
+    "end" : "sleep 5"
+  },
+  "contracts": [{"name": "ycsb", "path": "src/contract/quorum/ycsb.sol"}],
+  "test": {
+    "name": "ycsb",
+    "description" : "This is ycsb benchmark for caliper",
+    "clients": {
+      "type": "local",
+      "number": 64
+    },
+    "rounds": [
+      {
+        "label" : "insert",
+        "txNumber" : [128000],
+        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 100}}],
+        "arguments": {"txnPerBatch":10, "fieldCount": 10, "fieldLength": 100},
+        "callback" : "benchmark/ycsb/insert.js"
+      }
+      , 
+      { "label" : "rw350",
+        "txNumber" : [70000],
+        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 350}}],
+        "arguments": {"txnPerBatch":1, "distribution": "zipf", "zipf_s": 0.99, "recordCount": 128000, "readRatio": 0.6, "updateRatio": 0.4, "insertRatio": 0.0, "deleteRatio": 0.0, "modifyRatio": 0.0},
+        "callback" : "benchmark/ycsb/txn.js"
+      }
+      , 
+      { "label" : "rw360",
+        "txNumber" : [75000],
+        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 360}}],
+        "arguments": {"txnPerBatch":1, "distribution": "zipf", "zipf_s": 0.99, "recordCount": 128000, "readRatio": 0.6, "updateRatio": 0.4, "insertRatio": 0.0, "deleteRatio": 0.0, "modifyRatio": 0.0},
+        "callback" : "benchmark/ycsb/txn.js"
+      }
+      , 
+      { "label" : "rw370",
+        "txNumber" : [74000],
+        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 370}}],
+        "arguments": {"txnPerBatch":1, "distribution": "zipf", "zipf_s": 0.99, "recordCount": 128000, "readRatio": 0.6, "updateRatio": 0.4, "insertRatio": 0.0, "deleteRatio": 0.0, "modifyRatio": 0.0},
+        "callback" : "benchmark/ycsb/txn.js"
+      }
+    ]
+  }
+}

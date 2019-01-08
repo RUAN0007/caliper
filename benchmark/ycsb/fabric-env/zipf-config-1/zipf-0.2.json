@@ -1,0 +1,55 @@
+{
+   "blockchain": {
+        "type": "fabric"
+  },
+  "command" : {
+    "start": "sleep 5",
+    "end" : "sleep 5"
+  },
+  "contracts": [{"id": "ycsb", "path": "contract/fabric/ycsb", "language":"golang", "version": "v0"}],
+  "test": {
+    "name": "ycsb",
+    "description" : "This is ycsb benchmark for caliper",
+    "clients": {
+      "type": "local",
+      "number": 64
+    },
+    "rounds": [
+      {
+        "label" : "insert",
+        "txNumber" : [128000],
+        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 200}}],
+        "arguments": {"txnPerBatch":10, "fieldCount": 10, "fieldLength": 100},
+        "callback" : "benchmark/ycsb/insert.js"
+      }
+      , 
+      { "label" : "zipf200",
+        "txNumber" : [25600],
+        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 200}}],
+        "arguments": {"txnPerBatch":1, "distribution": "zipf", "zipf_s": 0.2, "recordCount": 128000, "readRatio": 0.0, "updateRatio": 0.0, "insertRatio": 0.0, "deleteRatio": 0.0, "modifyRatio": 1.0},
+        "callback" : "benchmark/ycsb/txn.js"
+      }
+      , 
+      { "label" : "zipf210",
+        "txNumber" : [25600],
+        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 210}}],
+        "arguments": {"txnPerBatch":1, "distribution": "zipf", "zipf_s": 0.2, "recordCount": 128000, "readRatio": 0.0, "updateRatio": 0.0, "insertRatio": 0.0, "deleteRatio": 0.0, "modifyRatio": 1.0},
+        "callback" : "benchmark/ycsb/txn.js"
+      }
+      , 
+      { "label" : "zipf220",
+        "txNumber" : [25600],
+        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 220}}],
+        "arguments": {"txnPerBatch":1, "distribution": "zipf", "zipf_s": 0.2, "recordCount": 128000, "readRatio": 0.0, "updateRatio": 0.0, "insertRatio": 0.0, "deleteRatio": 0.0, "modifyRatio": 1.0},
+        "callback" : "benchmark/ycsb/txn.js"
+      }
+      , 
+      { "label" : "zipf230",
+        "txNumber" : [25600],
+        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 230}}],
+        "arguments": {"txnPerBatch":1, "distribution": "zipf", "zipf_s": 0.2, "recordCount": 128000, "readRatio": 0.0, "updateRatio": 0.0, "insertRatio": 0.0, "deleteRatio": 0.0, "modifyRatio": 1.0},
+        "callback" : "benchmark/ycsb/txn.js"
+      }
+    ]
+  }
+}

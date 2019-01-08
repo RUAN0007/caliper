@@ -1,0 +1,48 @@
+{
+   "blockchain": {
+        "type": "fabric"
+  },
+  "command" : {
+    "start": "sleep 5",
+    "end" : "sleep 5"
+  },
+  "contracts": [{"id": "ycsb", "path": "contract/fabric/ycsb", "language":"golang", "version": "v0"}],
+  "test": {
+    "name": "ycsb",
+    "description" : "This is ycsb benchmark for caliper",
+    "clients": {
+      "type": "local",
+      "number": 64
+    },
+    "rounds": [
+      {
+        "label" : "insert",
+        "txNumber" : [128000],
+        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 200}}],
+        "arguments": {"txnPerBatch":10, "fieldCount": 10, "fieldLength": 100},
+        "callback" : "benchmark/ycsb/insert.js"
+      }
+      , 
+      { "label" : "upper120",
+        "txNumber" : [12800],
+        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 120}}],
+        "arguments": {"txnPerBatch":1, "distribution": "uniform",  "recordCount": 128000,  "upperCount": 40},
+        "callback" : "benchmark/ycsb/upper.js"
+      }
+      , 
+      { "label" : "upper130",
+        "txNumber" : [12800],
+        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 130}}],
+        "arguments": {"txnPerBatch":1, "distribution": "uniform",  "recordCount": 128000,  "upperCount": 40},
+        "callback" : "benchmark/ycsb/upper.js"
+      }
+      , 
+      { "label" : "upper140",
+        "txNumber" : [12800],
+        "rateControl" : [{"type": "fixed-rate", "opts": {"tps" : 140}}],
+        "arguments": {"txnPerBatch":1, "distribution": "uniform",  "recordCount": 128000,  "upperCount": 40},
+        "callback" : "benchmark/ycsb/upper.js"
+      }
+    ]
+  }
+}
