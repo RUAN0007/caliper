@@ -142,7 +142,7 @@ function registerBlockProcessing(clientIdx, callback, err_cb) {
             callback(valid_txnIds, invalid_txnIds);
 
         }, (err) => {
-            commUtils.log("Fail to register block event");
+            commUtils.log("Fail to receive block with error: ", err);
             err_cb(err);
         },
             {unregister: false, disconnect: false}
